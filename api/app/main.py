@@ -18,6 +18,7 @@ app.include_router(live.router)
 app.include_router(storage.router)
 app.include_router(photo.router)
 app.include_router(scenario.router)
+app.include_router(image_gen.router)
 
 
 @app.get("/health")
