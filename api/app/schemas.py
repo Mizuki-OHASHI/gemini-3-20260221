@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class GameCreateRequest(BaseModel):
     player_name: str
+    ghost_description: str = "長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。"
 
 
 class GameResponse(BaseModel):
@@ -18,6 +19,8 @@ class GameResponse(BaseModel):
     current_phase: str
     unlocked_hints: list[int]
     photo_count: int
+    ghost_description: str = ""
+    cleared_items: list[str] = []
     created_at: datetime
     updated_at: datetime
 
@@ -70,6 +73,31 @@ class ScenarioChapter(BaseModel):
     hints: list[str]
     answer_keyword: str
     ghost_prompt_template: str
+
+
+# --- Turn ---
+
+
+class VisionDetectionResult(BaseModel):
+    detected_item: str | None = None
+    confidence: str  # "high" | "medium" | "low" | "none"
+    explanation: str
+
+
+class TurnResponse(BaseModel):
+    game_id: str
+    photo_id: str
+    original_url: str
+    detected_item: str | None = None
+    detected_chapter: int | None = None
+    ghost_url: str | None = None
+    ghost_message: str | None = None
+    cleared_items: list[str]
+    items_remaining: list[str]
+    game_status: str  # "playing" | "solved"
+    game_solved: bool
+    story: str | None = None
+    message: str
 
 
 # --- Gemini ---

@@ -13,6 +13,8 @@ export interface GameResponse {
   current_phase: string;
   unlocked_hints: number[];
   photo_count: number;
+  ghost_description?: string;
+  cleared_items?: string[];
   created_at: string;
   updated_at: string;
 }

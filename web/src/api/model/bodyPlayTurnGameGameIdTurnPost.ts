@@ -5,7 +5,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface GameCreateRequest {
-  player_name: string;
-  ghost_description?: string;
+export interface BodyPlayTurnGameGameIdTurnPost {
+  file: Blob;
 }

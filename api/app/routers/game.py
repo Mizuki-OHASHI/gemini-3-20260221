@@ -28,6 +28,8 @@ async def create_game(req: GameCreateRequest):
         "current_phase": "explore",
         "unlocked_hints": [],
         "photo_count": 0,
+        "ghost_description": req.ghost_description,
+        "cleared_items": [],
         "created_at": now,
         "updated_at": now,
     }

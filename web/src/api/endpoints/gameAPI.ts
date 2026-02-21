@@ -14,6 +14,7 @@ import type {
 import type {
   AnswerRequest,
   AnswerResponse,
+  BodyPlayTurnGameGameIdTurnPost,
   BodyUploadFileStorageUploadPost,
   BodyUploadPhotoGameGameIdPhotosPost,
   GameCreateRequest,
@@ -26,7 +27,8 @@ import type {
   HintUnlockRequest,
   PhotoListResponse,
   PhotoResponse,
-  ScenarioChapter
+  ScenarioChapter,
+  TurnResponse
 } from '../model';
 
 
@@ -217,6 +219,21 @@ const getChapterScenarioChaptersChapterGet = (
   }
 
 /**
+ * @summary Play Turn
+ */
+const playTurnGameGameIdTurnPost = (
+    gameId: string,
+    bodyPlayTurnGameGameIdTurnPost: BodyPlayTurnGameGameIdTurnPost, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<TurnResponse>> => {const formData = new FormData();
+formData.append(`file`, bodyPlayTurnGameGameIdTurnPost.file);
+
+    return axiosInstance.post(
+      `/game/${gameId}/turn`,
+      formData,options
+    );
+  }
+
+/**
  * @summary Health
  */
 const healthHealthGet = (
@@ -227,7 +244,7 @@ const healthHealthGet = (
     );
   }
 
-return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,unlockHintGameGameIdUnlockHintPost,checkAnswerGameGameIdAnswerPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listChaptersScenarioChaptersGet,getChapterScenarioChaptersChapterGet,healthHealthGet}};
+return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,unlockHintGameGameIdUnlockHintPost,checkAnswerGameGameIdAnswerPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listChaptersScenarioChaptersGet,getChapterScenarioChaptersChapterGet,playTurnGameGameIdTurnPost,healthHealthGet}};
 export type CreateGameGamePostResult = AxiosResponse<GameResponse>
 export type GetGameGameGameIdGetResult = AxiosResponse<GameResponse>
 export type UpdateGameGameGameIdPatchResult = AxiosResponse<GameResponse>
@@ -243,4 +260,5 @@ export type GetPhotoGameGameIdPhotosPhotoIdGetResult = AxiosResponse<PhotoRespon
 export type GenerateGhostGameGameIdPhotosPhotoIdGhostPostResult = AxiosResponse<PhotoResponse>
 export type ListChaptersScenarioChaptersGetResult = AxiosResponse<ScenarioChapter[]>
 export type GetChapterScenarioChaptersChapterGetResult = AxiosResponse<ScenarioChapter>
+export type PlayTurnGameGameIdTurnPostResult = AxiosResponse<TurnResponse>
 export type HealthHealthGetResult = AxiosResponse<unknown>
