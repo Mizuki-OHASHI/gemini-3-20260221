@@ -80,14 +80,8 @@ export function MainPage() {
       <ProgressIndicator clearedItems={clearedItems} />
 
       <div className="relative aspect-[3/4] bg-[var(--color-dusk)] border border-[var(--color-mist)] rounded-2xl overflow-hidden">
-        {/* カメラフィード / キャプチャ画像 */}
-        {capturedImage ? (
-          <img
-            src={capturedImage}
-            alt="撮影した写真"
-            className="w-full h-full object-cover"
-          />
-        ) : isActive ? (
+        {/* カメラフィード */}
+        {isActive ? (
           <video
             ref={videoRef}
             autoPlay
@@ -105,6 +99,15 @@ export function MainPage() {
               カメラ起動
             </button>
           </div>
+        )}
+
+        {/* キャプチャ画像（フリーズ表示） */}
+        {capturedImage && (
+          <img
+            src={capturedImage}
+            alt="撮影した写真"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         )}
 
         {/* ローディングオーバーレイ */}

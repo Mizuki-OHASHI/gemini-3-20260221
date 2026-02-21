@@ -35,7 +35,9 @@ JSON形式で回答:
 {{"detected_item": "アイテム名 or null", "confidence": "high/medium/low/none", "explanation": "判定理由"}}"""
 
 
-def _build_ghost_prompt(hint_message: str, detected_item: str | None, has_avatar: bool) -> str:
+def _build_ghost_prompt(
+    hint_message: str, detected_item: str | None, has_avatar: bool
+) -> str:
     if detected_item:
         action = f"幽霊は{ITEM_LABELS.get(detected_item, detected_item)}を指さしている"
     else:
@@ -154,8 +156,9 @@ async def play_turn(game_id: str, file: UploadFile):
         label = ITEM_LABELS.get(detected_item, detected_item)
         message = f"{label}を発見しました！幽霊が何かを伝えています..."
     else:
-        remaining_labels = [ITEM_LABELS.get(i, i) for i in new_remaining]
-        message = f"手がかりが見つかりませんでした。{', '.join(remaining_labels)}を探してみましょう。"
+        message = (
+            f"手がかりが見つかりませんでした。ただ悲しそうに悲しそうに佇んでいます。"
+        )
 
     return TurnResponse(
         game_id=game_id,
@@ -194,7 +197,10 @@ async def _detect_item(
     try:
         result = json.loads(response.text)
         # detected_item が残りアイテムに含まれない場合は未検出扱い
-        if result.get("detected_item") and result["detected_item"] not in remaining_items:
+        if (
+            result.get("detected_item")
+            and result["detected_item"] not in remaining_items
+        ):
             result["detected_item"] = None
             result["confidence"] = "none"
         return VisionDetectionResult(**result)
