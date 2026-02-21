@@ -12,6 +12,7 @@ type Character = {
   occupation: string;
   relation: string;
   impression: string;
+  aribai: string;
   imagePath: string | null;
 };
 
@@ -26,6 +27,7 @@ const suspects: Character[] = [
     occupation: "フリーランス Webデザイナー",
     relation: "2年前に別れた元彼氏",
     impression: "温厚で口数が少なく、一見して害のなさそうな男。別れた後も「友人として」連絡を取り続けていると聞いて安心していたが、複数のアカウントで澪のSNSを監視していたと知り背筋が凍った。感情を表に出さない分、何をため込んでいるのかまるで読めない。",
+    aribai: "前日の朝から発見されるまでアリバイは存在しない",
     imagePath: "characters/ren.png",
   },
   {
@@ -36,6 +38,7 @@ const suspects: Character[] = [
     occupation: "ネイリスト（個人サロン勤務）",
     relation: "幼馴染・10年以上の親友",
     impression: "いつも明るくて澪の一番の理解者だと思っていた。でも私と澪が付き合い始めてから、笑顔の裏に何か冷たいものを感じるようになった。「澪はあたしだけのもの」──そんな言葉が彼女の口から出た瞬間、友情と執着の境界線が完全に消えていた。",
+    aribai: "犯行時刻の1時間前から発見まで彼氏の家にいたことがわかっている。",
     imagePath: "characters/nana.png",
   },
   {
@@ -46,6 +49,7 @@ const suspects: Character[] = [
     occupation: "中堅製造業 部長",
     relation: "澪の父親",
     impression: "初めて挨拶した日から、品定めするような目線が外れなかった。娘思いの父親を演じているが、澪の交友関係から就職先まで全部コントロールしてきた人物だとあとから知った。澪が「父に絶対知られたくない秘密」を持っていたことが、今となっては恐ろしく思える。",
+    aribai: "前日の夜から発見されるまで自宅にいたと妻が証言している。",
     imagePath: "characters/kenji.png",
   },
   {
@@ -56,6 +60,7 @@ const suspects: Character[] = [
     occupation: "ITスタートアップ 営業マネージャー",
     relation: "直属の上司",
     impression: "有能で話しやすく、最初は「いい上司だ」と思っていた。でも私の存在を知った途端、澪との距離を急に置き始めた変化が引っかかる。都合が悪くなったら人を切り捨てるタイプだと澪から聞いていた。あの爽やかな笑顔の裏に、どれだけの計算があるのか分からない。",
+    aribai: "犯行時刻の4時間前から朝まで、会社の同僚と飲み会に参加していたことがわかっている",
     imagePath: "characters/mishima.png",
   },
 ];
