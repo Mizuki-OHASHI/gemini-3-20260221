@@ -93,7 +93,7 @@ export function ContextPage() {
             SUSPECTS
           </h2>
           <p className="text-xs text-[var(--color-ash)]/60 mt-0.5">
-            彼女を殺した犯人は、この中にいる。
+            恋人を殺した犯人は、この中にいる。
           </p>
         </div>
 
@@ -185,8 +185,7 @@ export function ContextPage() {
             終章
           </h2>
           <p className="text-[var(--color-whisper)] leading-relaxed text-sm">
-            犯人は見つかり逮捕された。
-            でも澪はもう帰ってこない。
+            犯人は見つかり逮捕された。 でも澪はもう帰ってこない。
           </p>
           <p className="text-[var(--color-ash)] text-xs italic">
             ──これからも部屋で見守ってくれるのだろうか。
