@@ -1,4 +1,6 @@
 .venv/
 __pycache__/
 .env
+.claude
 serviceAccountKey.json
+*firebase-adminsdk*.json

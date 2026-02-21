@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import game, gemini, live, photo, scenario, storage, turn
+from app.routers import game, image_gen, live, photo, scenario, storage, suspect, turn
 
 app = FastAPI(title="Game API")
 
@@ -14,12 +14,13 @@ app.add_middleware(
 )
 
 app.include_router(game.router)
-app.include_router(gemini.router)
 app.include_router(live.router)
 app.include_router(storage.router)
 app.include_router(photo.router)
 app.include_router(scenario.router)
 app.include_router(turn.router)
+app.include_router(image_gen.router)
+app.include_router(suspect.router)
 
 
 @app.get("/health")
