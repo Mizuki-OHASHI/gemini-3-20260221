@@ -12,9 +12,21 @@ import type {
 } from 'axios';
 
 import type {
+  AnswerRequest,
+  AnswerResponse,
   BodyUploadFileStorageUploadPost,
+  BodyUploadPhotoGameGameIdPhotosPost,
   GameCreateRequest,
-  GameResponse
+  GameResponse,
+  GameUpdateRequest,
+  GenerateImageRequest,
+  GenerateImageResponse,
+  GenerateRequest,
+  GenerateResponse,
+  HintUnlockRequest,
+  PhotoListResponse,
+  PhotoResponse,
+  ScenarioChapter
 } from '../model';
 
 
@@ -45,6 +57,69 @@ const getGameGameGameIdGet = (
   }
 
 /**
+ * @summary Update Game
+ */
+const updateGameGameGameIdPatch = (
+    gameId: string,
+    gameUpdateRequest: GameUpdateRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<GameResponse>> => {
+    return axiosInstance.patch(
+      `/game/${gameId}`,
+      gameUpdateRequest,options
+    );
+  }
+
+/**
+ * @summary Unlock Hint
+ */
+const unlockHintGameGameIdUnlockHintPost = (
+    gameId: string,
+    hintUnlockRequest: HintUnlockRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<GameResponse>> => {
+    return axiosInstance.post(
+      `/game/${gameId}/unlock-hint`,
+      hintUnlockRequest,options
+    );
+  }
+
+/**
+ * @summary Check Answer
+ */
+const checkAnswerGameGameIdAnswerPost = (
+    gameId: string,
+    answerRequest: AnswerRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AnswerResponse>> => {
+    return axiosInstance.post(
+      `/game/${gameId}/answer`,
+      answerRequest,options
+    );
+  }
+
+/**
+ * @summary Generate
+ */
+const generateGeminiGeneratePost = (
+    generateRequest: GenerateRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<GenerateResponse>> => {
+    return axiosInstance.post(
+      `/gemini/generate`,
+      generateRequest,options
+    );
+  }
+
+/**
+ * @summary Generate Image
+ */
+const generateImageGeminiGenerateImagePost = (
+    generateImageRequest: GenerateImageRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<GenerateImageResponse>> => {
+    return axiosInstance.post(
+      `/gemini/generate-image`,
+      generateImageRequest,options
+    );
+  }
+
+/**
  * @summary Upload File
  */
 const uploadFileStorageUploadPost = (
@@ -70,6 +145,78 @@ const getSignedUrlStorageUrlPathGet = (
   }
 
 /**
+ * @summary Upload Photo
+ */
+const uploadPhotoGameGameIdPhotosPost = (
+    gameId: string,
+    bodyUploadPhotoGameGameIdPhotosPost: BodyUploadPhotoGameGameIdPhotosPost, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<PhotoResponse>> => {const formData = new FormData();
+formData.append(`file`, bodyUploadPhotoGameGameIdPhotosPost.file);
+
+    return axiosInstance.post(
+      `/game/${gameId}/photos/`,
+      formData,options
+    );
+  }
+
+/**
+ * @summary List Photos
+ */
+const listPhotosGameGameIdPhotosGet = (
+    gameId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<PhotoListResponse>> => {
+    return axiosInstance.get(
+      `/game/${gameId}/photos/`,options
+    );
+  }
+
+/**
+ * @summary Get Photo
+ */
+const getPhotoGameGameIdPhotosPhotoIdGet = (
+    gameId: string,
+    photoId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<PhotoResponse>> => {
+    return axiosInstance.get(
+      `/game/${gameId}/photos/${photoId}`,options
+    );
+  }
+
+/**
+ * @summary Generate Ghost
+ */
+const generateGhostGameGameIdPhotosPhotoIdGhostPost = (
+    gameId: string,
+    photoId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<PhotoResponse>> => {
+    return axiosInstance.post(
+      `/game/${gameId}/photos/${photoId}/ghost`,undefined,options
+    );
+  }
+
+/**
+ * @summary List Chapters
+ */
+const listChaptersScenarioChaptersGet = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ScenarioChapter[]>> => {
+    return axiosInstance.get(
+      `/scenario/chapters`,options
+    );
+  }
+
+/**
+ * @summary Get Chapter
+ */
+const getChapterScenarioChaptersChapterGet = (
+    chapter: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ScenarioChapter>> => {
+    return axiosInstance.get(
+      `/scenario/chapters/${chapter}`,options
+    );
+  }
+
+/**
  * @summary Health
  */
 const healthHealthGet = (
@@ -80,9 +227,20 @@ const healthHealthGet = (
     );
   }
 
-return {createGameGamePost,getGameGameGameIdGet,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,healthHealthGet}};
+return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,unlockHintGameGameIdUnlockHintPost,checkAnswerGameGameIdAnswerPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listChaptersScenarioChaptersGet,getChapterScenarioChaptersChapterGet,healthHealthGet}};
 export type CreateGameGamePostResult = AxiosResponse<GameResponse>
 export type GetGameGameGameIdGetResult = AxiosResponse<GameResponse>
+export type UpdateGameGameGameIdPatchResult = AxiosResponse<GameResponse>
+export type UnlockHintGameGameIdUnlockHintPostResult = AxiosResponse<GameResponse>
+export type CheckAnswerGameGameIdAnswerPostResult = AxiosResponse<AnswerResponse>
+export type GenerateGeminiGeneratePostResult = AxiosResponse<GenerateResponse>
+export type GenerateImageGeminiGenerateImagePostResult = AxiosResponse<GenerateImageResponse>
 export type UploadFileStorageUploadPostResult = AxiosResponse<unknown>
 export type GetSignedUrlStorageUrlPathGetResult = AxiosResponse<unknown>
+export type UploadPhotoGameGameIdPhotosPostResult = AxiosResponse<PhotoResponse>
+export type ListPhotosGameGameIdPhotosGetResult = AxiosResponse<PhotoListResponse>
+export type GetPhotoGameGameIdPhotosPhotoIdGetResult = AxiosResponse<PhotoResponse>
+export type GenerateGhostGameGameIdPhotosPhotoIdGhostPostResult = AxiosResponse<PhotoResponse>
+export type ListChaptersScenarioChaptersGetResult = AxiosResponse<ScenarioChapter[]>
+export type GetChapterScenarioChaptersChapterGetResult = AxiosResponse<ScenarioChapter>
 export type HealthHealthGetResult = AxiosResponse<unknown>

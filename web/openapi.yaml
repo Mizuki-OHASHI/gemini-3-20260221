@@ -54,6 +54,151 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - game
+      summary: Update Game
+      operationId: update_game_game__game_id__patch
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /game/{game_id}/unlock-hint:
+    post:
+      tags:
+      - game
+      summary: Unlock Hint
+      operationId: unlock_hint_game__game_id__unlock_hint_post
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HintUnlockRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /game/{game_id}/answer:
+    post:
+      tags:
+      - game
+      summary: Check Answer
+      operationId: check_answer_game__game_id__answer_post
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /gemini/generate:
+    post:
+      tags:
+      - gemini
+      summary: Generate
+      operationId: generate_gemini_generate_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /gemini/generate-image:
+    post:
+      tags:
+      - gemini
+      summary: Generate Image
+      operationId: generate_image_gemini_generate_image_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateImageRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateImageResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /storage/upload:
     post:
       tags:
@@ -103,6 +248,169 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /game/{game_id}/photos/:
+    post:
+      tags:
+      - photo
+      summary: Upload Photo
+      operationId: upload_photo_game__game_id__photos__post
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_photo_game__game_id__photos__post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - photo
+      summary: List Photos
+      operationId: list_photos_game__game_id__photos__get
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /game/{game_id}/photos/{photo_id}:
+    get:
+      tags:
+      - photo
+      summary: Get Photo
+      operationId: get_photo_game__game_id__photos__photo_id__get
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      - name: photo_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Photo Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /game/{game_id}/photos/{photo_id}/ghost:
+    post:
+      tags:
+      - photo
+      summary: Generate Ghost
+      operationId: generate_ghost_game__game_id__photos__photo_id__ghost_post
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      - name: photo_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Photo Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /scenario/chapters:
+    get:
+      tags:
+      - scenario
+      summary: List Chapters
+      operationId: list_chapters_scenario_chapters_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ScenarioChapter'
+                type: array
+                title: Response List Chapters Scenario Chapters Get
+  /scenario/chapters/{chapter}:
+    get:
+      tags:
+      - scenario
+      summary: Get Chapter
+      operationId: get_chapter_scenario_chapters__chapter__get
+      parameters:
+      - name: chapter
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Chapter
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioChapter'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /health:
     get:
       summary: Health
@@ -115,6 +423,33 @@ paths:
               schema: {}
 components:
   schemas:
+    AnswerRequest:
+      properties:
+        answer_text:
+          type: string
+          title: Answer Text
+      type: object
+      required:
+      - answer_text
+      title: AnswerRequest
+    AnswerResponse:
+      properties:
+        correct:
+          type: boolean
+          title: Correct
+        message:
+          type: string
+          title: Message
+        next_chapter:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Chapter
+      type: object
+      required:
+      - correct
+      - message
+      title: AnswerResponse
     Body_upload_file_storage_upload_post:
       properties:
         file:
@@ -125,6 +460,16 @@ components:
       required:
       - file
       title: Body_upload_file_storage_upload_post
+    Body_upload_photo_game__game_id__photos__post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_upload_photo_game__game_id__photos__post
     GameCreateRequest:
       properties:
         player_name:
@@ -145,12 +490,103 @@ components:
         status:
           type: string
           title: Status
+        current_chapter:
+          type: integer
+          title: Current Chapter
+        current_phase:
+          type: string
+          title: Current Phase
+        unlocked_hints:
+          items:
+            type: integer
+          type: array
+          title: Unlocked Hints
+        photo_count:
+          type: integer
+          title: Photo Count
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
       type: object
       required:
       - id
       - player_name
       - status
+      - current_chapter
+      - current_phase
+      - unlocked_hints
+      - photo_count
+      - created_at
+      - updated_at
       title: GameResponse
+    GameUpdateRequest:
+      properties:
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+        current_chapter:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Chapter
+        current_phase:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Phase
+      type: object
+      title: GameUpdateRequest
+    GenerateImageRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+      type: object
+      required:
+      - prompt
+      title: GenerateImageRequest
+    GenerateImageResponse:
+      properties:
+        image:
+          type: string
+          title: Image
+        mime_type:
+          type: string
+          title: Mime Type
+      type: object
+      required:
+      - image
+      - mime_type
+      title: GenerateImageResponse
+    GenerateRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+        model:
+          type: string
+          title: Model
+          default: gemini-2.5-flash
+      type: object
+      required:
+      - prompt
+      title: GenerateRequest
+    GenerateResponse:
+      properties:
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+      - text
+      title: GenerateResponse
     HTTPValidationError:
       properties:
         detail:
@@ -160,6 +596,98 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    HintUnlockRequest:
+      properties:
+        hint_index:
+          type: integer
+          title: Hint Index
+      type: object
+      required:
+      - hint_index
+      title: HintUnlockRequest
+    PhotoListResponse:
+      properties:
+        photos:
+          items:
+            $ref: '#/components/schemas/PhotoResponse'
+          type: array
+          title: Photos
+      type: object
+      required:
+      - photos
+      title: PhotoListResponse
+    PhotoResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        game_id:
+          type: string
+          title: Game Id
+        chapter:
+          type: integer
+          title: Chapter
+        original_url:
+          type: string
+          title: Original Url
+        ghost_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ghost Url
+        ghost_gesture:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ghost Gesture
+        ghost_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ghost Message
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - game_id
+      - chapter
+      - original_url
+      - created_at
+      title: PhotoResponse
+    ScenarioChapter:
+      properties:
+        chapter:
+          type: integer
+          title: Chapter
+        title:
+          type: string
+          title: Title
+        story:
+          type: string
+          title: Story
+        hints:
+          items:
+            type: string
+          type: array
+          title: Hints
+        answer_keyword:
+          type: string
+          title: Answer Keyword
+        ghost_prompt_template:
+          type: string
+          title: Ghost Prompt Template
+      type: object
+      required:
+      - chapter
+      - title
+      - story
+      - hints
+      - answer_keyword
+      - ghost_prompt_template
+      title: ScenarioChapter
     ValidationError:
       properties:
         loc:

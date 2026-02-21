@@ -5,9 +5,21 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './answerRequest';
+export * from './answerResponse';
 export * from './bodyUploadFileStorageUploadPost';
+export * from './bodyUploadPhotoGameGameIdPhotosPost';
 export * from './gameCreateRequest';
 export * from './gameResponse';
+export * from './gameUpdateRequest';
+export * from './generateImageRequest';
+export * from './generateImageResponse';
+export * from './generateRequest';
+export * from './generateResponse';
+export * from './hintUnlockRequest';
 export * from './hTTPValidationError';
+export * from './photoListResponse';
+export * from './photoResponse';
+export * from './scenarioChapter';
 export * from './validationError';
 export * from './validationErrorCtx';

@@ -9,4 +9,10 @@ export interface GameResponse {
   id: string;
   player_name: string;
   status: string;
+  current_chapter: number;
+  current_phase: string;
+  unlocked_hints: number[];
+  photo_count: number;
+  created_at: string;
+  updated_at: string;
 }
