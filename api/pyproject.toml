@@ -1,0 +1,12 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "Game API with Gemini & Firebase"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.129.0",
+    "firebase-admin>=7.1.0",
+    "google-genai>=1.64.0",
+    "python-dotenv>=1.2.1",
+    "uvicorn[standard]>=0.41.0",
+]
