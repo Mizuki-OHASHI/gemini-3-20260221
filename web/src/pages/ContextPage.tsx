@@ -31,7 +31,7 @@ export function ContextPage() {
             const hintData = hints.find((h) => h.item === item.key);
             const clueNum = clearedItems.indexOf(item.key);
 
-            if (cleared && hintData) {
+            if (cleared) {
               return (
                 <div
                   key={item.key}
@@ -45,16 +45,18 @@ export function ContextPage() {
                       {item.label}
                     </span>
                   </div>
-                  {hintData.ghostUrl && (
+                  {hintData?.ghostUrl && (
                     <img
                       src={hintData.ghostUrl}
                       alt={`${item.label}の手がかり`}
                       className="w-full rounded-xl"
                     />
                   )}
-                  <p className="text-[var(--color-whisper)] leading-relaxed text-sm">
-                    {hintData.message}
-                  </p>
+                  {hintData?.message && (
+                    <p className="text-[var(--color-whisper)] leading-relaxed text-sm">
+                      {hintData.message}
+                    </p>
+                  )}
                 </div>
               );
             }
