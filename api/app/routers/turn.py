@@ -35,13 +35,17 @@ JSON形式で回答:
 {{"detected_item": "アイテム名 or null", "confidence": "high/medium/low/none", "explanation": "判定理由"}}"""
 
 
-def _build_ghost_prompt(ghost_description: str, hint_message: str, detected_item: str | None) -> str:
+def _build_ghost_prompt(hint_message: str, detected_item: str | None, has_avatar: bool) -> str:
     if detected_item:
         action = f"幽霊は{ITEM_LABELS.get(detected_item, detected_item)}を指さしている"
     else:
         action = "幽霊はただ泣いている。悲しげに佇んでいる"
+    if has_avatar:
+        appearance = "添付のアバター画像の人物を幽霊として合成してください。"
+    else:
+        appearance = "幽霊の外見: 長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。"
     return f"""この写真に幽霊を合成してください。
-幽霊の外見: {ghost_description}
+{appearance}
 幽霊の行動: {action}
 元の写真の構図や雰囲気を保持したまま、半透明の幽霊を自然に重ねてください。"""
 
@@ -58,10 +62,7 @@ async def play_turn(game_id: str, file: UploadFile):
     if game_data.get("status") == "solved":
         raise HTTPException(status_code=400, detail="Game already solved")
 
-    ghost_description = game_data.get(
-        "ghost_description",
-        "長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。",
-    )
+    avatar_url: str | None = game_data.get("avatar_url")
     cleared_items: list[str] = game_data.get("cleared_items", [])
 
     # 2. 残りアイテム計算
@@ -103,7 +104,7 @@ async def play_turn(game_id: str, file: UploadFile):
     try:
         ghost_url, ghost_message = await _generate_ghost(
             photo_bytes,
-            ghost_description,
+            avatar_url,
             hint_message,
             detected_item,
             game_id,
@@ -206,21 +207,29 @@ async def _detect_item(
 
 async def _generate_ghost(
     photo_bytes: bytes,
-    ghost_description: str,
+    avatar_url: str | None,
     hint_message: str,
     detected_item: str | None,
     game_id: str,
     seq: str,
 ) -> tuple[str, str | None]:
     """Gemini で幽霊画像を合成し、GCS にアップロードする。"""
-    prompt = _build_ghost_prompt(ghost_description, hint_message, detected_item)
+    has_avatar = avatar_url is not None
+    prompt = _build_ghost_prompt(hint_message, detected_item, has_avatar)
+
+    contents: list[types.Part] = []
+    if avatar_url:
+        # GCS からアバター画像を取得して参照画像として添付
+        avatar_blob_name = avatar_url.split(f"/{bucket.name}/")[-1]
+        avatar_blob = bucket.blob(avatar_blob_name)
+        avatar_bytes = avatar_blob.download_as_bytes()
+        contents.append(types.Part.from_bytes(data=avatar_bytes, mime_type="image/png"))
+    contents.append(types.Part.from_bytes(data=photo_bytes, mime_type="image/jpeg"))
+    contents.append(types.Part.from_text(text=prompt))
 
     response = await client.aio.models.generate_content(
         model="gemini-3-pro-image-preview",
-        contents=[
-            types.Part.from_bytes(data=photo_bytes, mime_type="image/jpeg"),
-            types.Part.from_text(text=prompt),
-        ],
+        contents=contents,
         config=types.GenerateContentConfig(
             response_modalities=["TEXT", "IMAGE"],
         ),

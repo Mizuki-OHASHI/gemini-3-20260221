@@ -17,9 +17,15 @@ class GameResponse(BaseModel):
     status: str
     photo_count: int
     ghost_description: str = ""
+    avatar_url: str | None = None
     cleared_items: list[str] = []
     created_at: datetime
     updated_at: datetime
+
+
+class AvatarResponse(BaseModel):
+    game_id: str
+    avatar_url: str
 
 
 class GameUpdateRequest(BaseModel):
@@ -36,6 +42,7 @@ class PhotoResponse(BaseModel):
     ghost_url: str | None = None
     ghost_gesture: str | None = None
     ghost_message: str | None = None
+    detected_item: str | None = None
     created_at: datetime
 
 

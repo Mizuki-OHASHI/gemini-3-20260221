@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGame } from "../contexts/GameContext";
 
 const START_DIALOG = [
   "付き合って、1年が経った。",
@@ -31,14 +32,17 @@ const HAIR_LENGTHS = [
   { id: "long", label: "ロング" },
 ];
 
-// TODO: ここを実際のアバター生成APIエンドポイントに差し替えてください。
-const AVATAR_GENERATE_ENDPOINT = "/api/avatar/generate";
+const HAIR_COLOR_MAP: Record<string, string> = {
+  black: "黒髪",
+  brown: "茶髪",
+  blonde: "金髪",
+  silver: "銀髪",
+};
 
-type AvatarGenerateResponse = {
-  imageUrl?: string;
-  image_url?: string;
-  avatarUrl?: string;
-  avatar_url?: string;
+const HAIR_LENGTH_MAP: Record<string, string> = {
+  short: "ショートヘア",
+  medium: "ミディアムヘア",
+  long: "ロングヘア",
 };
 
 type PreludePageProps = {
@@ -47,7 +51,7 @@ type PreludePageProps = {
 
 export function PreludePage({ onComplete }: PreludePageProps) {
   const navigate = useNavigate();
-  const objectUrlRef = useRef<string | null>(null);
+  const { createGame, generateAvatar } = useGame();
   const [step, setStep] = useState(0);
   const [hairColor, setHairColor] = useState<string | null>(null);
   const [hairLength, setHairLength] = useState<string | null>(null);
@@ -56,14 +60,6 @@ export function PreludePage({ onComplete }: PreludePageProps) {
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [blackout, setBlackout] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-      }
-    };
-  }, []);
 
   const goDark = () => {
     setBlackout(true);
@@ -78,7 +74,7 @@ export function PreludePage({ onComplete }: PreludePageProps) {
   );
 
   const handleGenerateAvatar = async () => {
-    if (!canGenerateAvatar || isGeneratingAvatar) {
+    if (!canGenerateAvatar || isGeneratingAvatar || !hairColor || !hairLength) {
       return;
     }
 
@@ -87,45 +83,18 @@ export function PreludePage({ onComplete }: PreludePageProps) {
     setAvatarUrl(null);
 
     try {
-      const response = await fetch(AVATAR_GENERATE_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: partnerName.trim(),
-          hairColor,
-          hairLength,
-        }),
-      });
+      // 髪色/長さから ghost_description を構築
+      const ghostDescription = `${HAIR_COLOR_MAP[hairColor]}の${HAIR_LENGTH_MAP[hairLength]}の少女。白いワンピースを着て、悲しげな表情をしている。`;
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      // ゲーム作成（まだ存在しない場合）
+      await createGame(ghostDescription);
 
-      const contentType = response.headers.get("content-type") ?? "";
-
-      if (contentType.includes("application/json")) {
-        const data = (await response.json()) as AvatarGenerateResponse;
-        const url =
-          data.imageUrl ?? data.image_url ?? data.avatarUrl ?? data.avatar_url;
-
-        if (!url) {
-          throw new Error("Missing image URL in response body.");
-        }
-        setAvatarUrl(url);
-      } else {
-        const blob = await response.blob();
-        if (objectUrlRef.current) {
-          URL.revokeObjectURL(objectUrlRef.current);
-        }
-        const objectUrl = URL.createObjectURL(blob);
-        objectUrlRef.current = objectUrl;
-        setAvatarUrl(objectUrl);
-      }
+      // アバター生成
+      const url = await generateAvatar();
+      setAvatarUrl(url);
     } catch (error) {
       setAvatarError(
-        `アバター生成に失敗しました。エンドポイントを確認してください。(${String(error)})`,
+        `アバター生成に失敗しました。(${String(error)})`,
       );
     } finally {
       setIsGeneratingAvatar(false);

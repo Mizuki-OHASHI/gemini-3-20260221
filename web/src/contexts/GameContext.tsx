@@ -10,6 +10,7 @@ interface HintInfo {
 
 interface GameState {
   gameId: string | null
+  avatarUrl: string | null
   clearedItems: string[]
   gameSolved: boolean
   hints: HintInfo[]
@@ -19,24 +20,22 @@ interface GameState {
 interface GameContextValue extends GameState {
   updateFromTurn: (turn: TurnResponse) => void
   resetGame: () => Promise<void>
+  createGame: (ghostDescription?: string) => Promise<string>
+  generateAvatar: () => Promise<string>
 }
 
 const GameContext = createContext<GameContextValue | null>(null)
 
 const LS_GAME_ID = 'ghost_whisper_game_id'
 
-async function createNewGame(): Promise<string> {
-  const res = await api.createGameGamePost({ player_name: 'player' })
-  return res.data.id
-}
-
-async function restoreHintsFromServer(gameId: string): Promise<{ hints: HintInfo[]; clearedItems: string[]; gameSolved: boolean }> {
+async function restoreHintsFromServer(gameId: string): Promise<{ avatarUrl: string | null; hints: HintInfo[]; clearedItems: string[]; gameSolved: boolean }> {
   const [gameRes, photosRes, hintsRes] = await Promise.all([
     api.getGameGameGameIdGet(gameId),
     api.listPhotosGameGameIdPhotosGet(gameId),
-    api.listHintMessagesScenarioHintsGet(),
+    api.listHintMessagesEndpointScenarioHintsGet(),
   ])
 
+  const avatarUrl = gameRes.data.avatar_url ?? null
   const clearedItems = gameRes.data.cleared_items ?? []
   const gameSolved = gameRes.data.status === 'solved'
 
@@ -53,12 +52,13 @@ async function restoreHintsFromServer(gameId: string): Promise<{ hints: HintInfo
       ghostUrl: p.ghost_url ?? null,
     }))
 
-  return { hints, clearedItems, gameSolved }
+  return { avatarUrl, hints, clearedItems, gameSolved }
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>({
     gameId: null,
+    avatarUrl: null,
     clearedItems: [],
     gameSolved: false,
     hints: [],
@@ -78,10 +78,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       if (gameId) {
         try {
-          const { hints, clearedItems, gameSolved } = await restoreHintsFromServer(gameId)
+          const { avatarUrl, hints, clearedItems, gameSolved } = await restoreHintsFromServer(gameId)
           if (cancelled) return
           setState({
             gameId,
+            avatarUrl,
             clearedItems,
             gameSolved,
             hints,
@@ -89,24 +90,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
           })
           return
         } catch {
-          // Game not found, create new
+          // Game not found, will need new game via PreludePage
           gameId = null
         }
       }
 
-      try {
-        gameId = await createNewGame()
-        if (cancelled) return
-        try { localStorage.setItem(LS_GAME_ID, gameId) } catch { /* noop */ }
-        setState({
-          gameId,
-          clearedItems: [],
-          gameSolved: false,
-          hints: [],
-          isInitializing: false,
-        })
-      } catch {
-        if (cancelled) return
+      // No saved game — don't auto-create; let PreludePage handle it
+      if (!cancelled) {
         setState((s) => ({ ...s, isInitializing: false }))
       }
     }
@@ -114,6 +104,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     init()
     return () => { cancelled = true }
   }, [])
+
+  const createGame = useCallback(async (ghostDescription?: string) => {
+    const res = await api.createGameGamePost({
+      player_name: 'player',
+      ...(ghostDescription ? { ghost_description: ghostDescription } : {}),
+    })
+    const gameId = res.data.id
+    try { localStorage.setItem(LS_GAME_ID, gameId) } catch { /* noop */ }
+    setState((s) => ({ ...s, gameId }))
+    return gameId
+  }, [])
+
+  const generateAvatar = useCallback(async () => {
+    const gameId = state.gameId
+    if (!gameId) throw new Error('Game not created yet')
+    const res = await api.generateAvatarGameGameIdAvatarPost(gameId)
+    const avatarUrl = res.data.avatar_url
+    setState((s) => ({ ...s, avatarUrl }))
+    return avatarUrl
+  }, [state.gameId])
 
   const updateFromTurn = useCallback((turn: TurnResponse) => {
     setState((prev) => {
@@ -140,24 +150,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const resetGame = useCallback(async () => {
     try { localStorage.removeItem(LS_GAME_ID) } catch { /* noop */ }
-    setState((s) => ({ ...s, isInitializing: true }))
-    try {
-      const gameId = await createNewGame()
-      try { localStorage.setItem(LS_GAME_ID, gameId) } catch { /* noop */ }
-      setState({
-        gameId,
-        clearedItems: [],
-        gameSolved: false,
-        hints: [],
-        isInitializing: false,
-      })
-    } catch {
-      setState((s) => ({ ...s, isInitializing: false }))
-    }
+    try { sessionStorage.removeItem('prelude_seen_v1') } catch { /* noop */ }
+    setState({
+      gameId: null,
+      avatarUrl: null,
+      clearedItems: [],
+      gameSolved: false,
+      hints: [],
+      isInitializing: false,
+    })
   }, [])
 
   return (
-    <GameContext.Provider value={{ ...state, updateFromTurn, resetGame }}>
+    <GameContext.Provider value={{ ...state, updateFromTurn, resetGame, createGame, generateAvatar }}>
       {children}
     </GameContext.Provider>
   )

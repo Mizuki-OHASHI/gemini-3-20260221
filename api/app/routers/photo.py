@@ -76,6 +76,7 @@ async def list_photos(game_id: str):
                 ghost_url=d.get("ghost_url"),
                 ghost_gesture=d.get("ghost_gesture"),
                 ghost_message=d.get("ghost_message"),
+                detected_item=d.get("detected_item"),
                 created_at=d["created_at"],
             )
         )
@@ -97,6 +98,7 @@ async def get_photo(game_id: str, photo_id: str):
         ghost_url=d.get("ghost_url"),
         ghost_gesture=d.get("ghost_gesture"),
         ghost_message=d.get("ghost_message"),
+        detected_item=d.get("detected_item"),
         created_at=d["created_at"],
     )
 
@@ -116,22 +118,42 @@ async def generate_ghost(game_id: str, photo_id: str):
     if not game_doc.exists:
         raise HTTPException(status_code=404, detail="Game not found")
     game_data = game_doc.to_dict()
-    ghost_description = game_data.get(
-        "ghost_description",
-        "長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。",
-    )
+    avatar_url: str | None = game_data.get("avatar_url")
 
     # Get hint messages
     hint_messages = load_hint_messages()
+
+    if avatar_url:
+        appearance = "添付のアバター画像の人物を幽霊として合成してください。"
+    else:
+        ghost_description = game_data.get(
+            "ghost_description",
+            "長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。",
+        )
+        appearance = f"幽霊の外見: {ghost_description}"
+
     ghost_prompt = f"""この写真に幽霊を合成してください。
-幽霊の外見: {ghost_description}
+{appearance}
 幽霊の行動: 幽霊はただ泣いている。悲しげに佇んでいる
 元の写真の構図や雰囲気を保持したまま、半透明の幽霊を自然に重ねてください。"""
 
     # Generate ghost image via Gemini
+    contents: list[types.Part] = []
+    if avatar_url:
+        avatar_blob_name = avatar_url.split(f"/{bucket.name}/")[-1]
+        avatar_blob = bucket.blob(avatar_blob_name)
+        avatar_bytes = avatar_blob.download_as_bytes()
+        contents.append(types.Part.from_bytes(data=avatar_bytes, mime_type="image/png"))
+
+    # 元の写真を取得して添付
+    original_blob = bucket.blob(photo_data["original_path"])
+    original_bytes = original_blob.download_as_bytes()
+    contents.append(types.Part.from_bytes(data=original_bytes, mime_type="image/jpeg"))
+    contents.append(types.Part.from_text(text=ghost_prompt))
+
     response = await client.aio.models.generate_content(
         model="gemini-2.0-flash-exp-image-generation",
-        contents=ghost_prompt,
+        contents=contents,
         config=types.GenerateContentConfig(
             response_modalities=["IMAGE", "TEXT"],
         ),

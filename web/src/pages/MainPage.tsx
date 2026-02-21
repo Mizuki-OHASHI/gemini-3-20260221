@@ -14,15 +14,18 @@ export function MainPage() {
   })
   const { videoRef, isActive, error: cameraError, start, capture } = useCamera()
   const { playTurn, isLoading, lastResult, error: turnError, dismissResult } = useGameTurn()
-  const { clearedItems, gameSolved, isInitializing, resetGame } = useGame()
+  const { gameId, clearedItems, gameSolved, isInitializing, resetGame } = useGame()
+
+  // gameId がない場合（リセット後など）も PreludePage を表示
+  const needsPrelude = showPrelude || !gameId
 
   useEffect(() => {
-    if (!showPrelude) {
+    if (!needsPrelude) {
       start()
     }
-  }, [showPrelude, start])
+  }, [needsPrelude, start])
 
-  if (showPrelude) {
+  if (needsPrelude) {
     return (
       <PreludePage
         onComplete={() => {
