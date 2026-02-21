@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGame } from "../contexts/GameContext";
 
@@ -51,7 +51,12 @@ type PreludePageProps = {
 
 export function PreludePage({ onComplete }: PreludePageProps) {
   const navigate = useNavigate();
-  const { createGame, generateAvatar } = useGame();
+  const { createGame, generateAvatar, setHideBottomNav } = useGame();
+
+  useEffect(() => {
+    setHideBottomNav(true);
+    return () => setHideBottomNav(false);
+  }, [setHideBottomNav]);
   const [step, setStep] = useState(0);
   const [hairColor, setHairColor] = useState<string | null>(null);
   const [hairLength, setHairLength] = useState<string | null>(null);
@@ -86,11 +91,9 @@ export function PreludePage({ onComplete }: PreludePageProps) {
       // 髪色/長さから ghost_description を構築
       const ghostDescription = `${HAIR_COLOR_MAP[hairColor]}の${HAIR_LENGTH_MAP[hairLength]}の少女。白いワンピースを着て、悲しげな表情をしている。`;
 
-      // ゲーム作成（まだ存在しない場合）
-      await createGame(ghostDescription);
-
-      // アバター生成
-      const url = await generateAvatar();
+      // ゲーム作成 → アバター生成
+      const newGameId = await createGame(ghostDescription);
+      const url = await generateAvatar(newGameId);
       setAvatarUrl(url);
     } catch (error) {
       setAvatarError(
@@ -102,9 +105,9 @@ export function PreludePage({ onComplete }: PreludePageProps) {
   };
 
   return (
-    <div className="relative min-h-full overflow-hidden">
+    <div className="relative min-h-dvh overflow-hidden">
       {step < 2 ? (
-        <div className="min-h-full p-4 bg-gradient-to-b from-[#f6e8c5] via-[#f2d7b5] to-[#d9b99b] text-[#2d1e18]">
+        <div className="min-h-dvh p-4 bg-gradient-to-b from-[#f6e8c5] via-[#f2d7b5] to-[#d9b99b] text-[#2d1e18]">
           {step === 0 && (
             <section className="space-y-5 animate-spirit-reveal">
               <div className="rounded-2xl border border-[#c99569] bg-[#fff8ea]/90 p-5 shadow-[0_10px_30px_rgba(121,70,35,0.15)]">
@@ -237,7 +240,7 @@ export function PreludePage({ onComplete }: PreludePageProps) {
           )}
         </div>
       ) : (
-        <div className="min-h-full bg-[var(--color-void)] p-4 text-[var(--color-whisper)]">
+        <div className="min-h-dvh bg-[var(--color-void)] p-4 text-[var(--color-whisper)]">
           <section className="space-y-4 animate-spirit-reveal">
             <div className="rounded-2xl border border-[var(--color-mist)] bg-[var(--color-dusk)] p-5">
               <p className="text-xs tracking-[0.22em] text-[var(--color-blood)] uppercase">

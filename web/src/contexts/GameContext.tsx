@@ -15,13 +15,15 @@ interface GameState {
   gameSolved: boolean
   hints: HintInfo[]
   isInitializing: boolean
+  hideBottomNav: boolean
 }
 
 interface GameContextValue extends GameState {
   updateFromTurn: (turn: TurnResponse) => void
   resetGame: () => Promise<void>
   createGame: (ghostDescription?: string) => Promise<string>
-  generateAvatar: () => Promise<string>
+  generateAvatar: (gameId?: string) => Promise<string>
+  setHideBottomNav: (hide: boolean) => void
 }
 
 const GameContext = createContext<GameContextValue | null>(null)
@@ -63,7 +65,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     gameSolved: false,
     hints: [],
     isInitializing: true,
+    hideBottomNav: false,
   })
+
+  const setHideBottomNav = useCallback((hide: boolean) => {
+    setState((s) => ({ ...s, hideBottomNav: hide }))
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -116,10 +123,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return gameId
   }, [])
 
-  const generateAvatar = useCallback(async () => {
-    const gameId = state.gameId
-    if (!gameId) throw new Error('Game not created yet')
-    const res = await api.generateAvatarGameGameIdAvatarPost(gameId)
+  const generateAvatar = useCallback(async (gameIdOverride?: string) => {
+    const id = gameIdOverride ?? state.gameId
+    if (!id) throw new Error('Game not created yet')
+    const res = await api.generateAvatarGameGameIdAvatarPost(id)
     const avatarUrl = res.data.avatar_url
     setState((s) => ({ ...s, avatarUrl }))
     return avatarUrl
@@ -162,7 +169,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <GameContext.Provider value={{ ...state, updateFromTurn, resetGame, createGame, generateAvatar }}>
+    <GameContext.Provider value={{ ...state, updateFromTurn, resetGame, createGame, generateAvatar, setHideBottomNav }}>
       {children}
     </GameContext.Provider>
   )
