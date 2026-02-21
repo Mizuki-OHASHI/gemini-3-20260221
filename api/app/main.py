@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import game, image_gen, live, storage
+from app.routers import game, image_gen, live, photo, scenario, storage
 
 app = FastAPI(title="Game API")
 

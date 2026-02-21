@@ -1,11 +1,9 @@
 import base64
 
-import httpx
 from fastapi import APIRouter, HTTPException
 from google.genai import types
 from pydantic import BaseModel
 
-from app.config import NANOBANANA_API_KEY, NANOBANANA_API_URL
 from app.gemini import client
 
 router = APIRouter(prefix="/image", tags=["image"])
@@ -25,46 +23,26 @@ class ImageGenResponse(BaseModel):
 
 
 async def _generate_image(prompt: str) -> tuple[bytes, str]:
-    """Nanobanana APIで画像を生成して (bytes, mime_type) を返す。"""
-    headers = {}
-    if NANOBANANA_API_KEY:
-        headers["Authorization"] = f"Bearer {NANOBANANA_API_KEY}"
+    """Gemini SDK (gemini-2.0-flash-exp-image-generation) で画像を生成して (bytes, mime_type) を返す。"""
+    response = await client.aio.models.generate_content(
+        model="gemini-2.0-flash-exp-image-generation",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE", "TEXT"],
+        ),
+    )
 
-    async with httpx.AsyncClient(timeout=60.0) as http:
-        resp = await http.post(
-            NANOBANANA_API_URL,
-            headers=headers,
-            json={"prompt": prompt},
-        )
-        resp.raise_for_status()
+    for part in response.candidates[0].content.parts:
+        if part.inline_data:
+            return part.inline_data.data, part.inline_data.mime_type
 
-    content_type = resp.headers.get("content-type", "image/png").split(";")[0].strip()
-
-    # レスポンスが JSON の場合（URL または base64 で返す API に対応）
-    if "application/json" in content_type:
-        data = resp.json()
-        if "image" in data:
-            image_bytes = base64.b64decode(data["image"])
-            mime_type = data.get("mime_type", "image/png")
-        elif "url" in data:
-            async with httpx.AsyncClient(timeout=60.0) as http:
-                img_resp = await http.get(data["url"])
-                img_resp.raise_for_status()
-            image_bytes = img_resp.content
-            mime_type = img_resp.headers.get("content-type", "image/png").split(";")[0].strip()
-        else:
-            raise HTTPException(status_code=502, detail="Nanobanana API returned unexpected JSON structure")
-    else:
-        image_bytes = resp.content
-        mime_type = content_type
-
-    return image_bytes, mime_type
+    raise HTTPException(status_code=500, detail="Gemini did not return an image")
 
 
 async def _check_spec(image_bytes: bytes, mime_type: str, spec: str) -> bool:
     """Geminiで画像が仕様を満たすか判定する。"""
     response = await client.aio.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash-lite",
         contents=[
             types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
             (
@@ -81,7 +59,7 @@ async def _check_spec(image_bytes: bytes, mime_type: str, spec: str) -> bool:
 @router.post("/generate", response_model=ImageGenResponse)
 async def generate_and_check(req: ImageGenRequest):
     """
-    Nanobananaで画像を生成し、Geminiで仕様チェックを行う。
+    Gemini (NanoBanana) で画像を生成し、仕様チェックを行う。
     仕様を満たせばそのまま返し、満たさなければmax_retriesまで再生成する。
     """
     last_image_bytes: bytes = b""
