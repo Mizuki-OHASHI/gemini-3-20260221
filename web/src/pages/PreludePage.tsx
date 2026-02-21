@@ -96,9 +96,7 @@ export function PreludePage({ onComplete }: PreludePageProps) {
       const url = await generateAvatar(newGameId);
       setAvatarUrl(url);
     } catch (error) {
-      setAvatarError(
-        `アバター生成に失敗しました。(${String(error)})`,
-      );
+      setAvatarError(`アバター生成に失敗しました。(${String(error)})`);
     } finally {
       setIsGeneratingAvatar(false);
     }
@@ -161,7 +159,6 @@ export function PreludePage({ onComplete }: PreludePageProps) {
                   </div>
                 </div>
               </div>
-
               <div className="rounded-2xl border border-[#d8b493] bg-[#fff9ef] p-4">
                 <label
                   htmlFor="partner-name"
@@ -249,9 +246,9 @@ export function PreludePage({ onComplete }: PreludePageProps) {
               <h2 className="mt-2 text-2xl font-bold text-[var(--color-frost)]">
                 {DEATH_DIALOG}
               </h2>
-              <p className="mt-4 text-lg text-[var(--color-spirit)]">
+              {/* <p className="mt-4 text-lg text-[var(--color-spirit)]">
                 「{MESSAGE_FROM_HELL}」
-              </p>
+              </p> */}
             </div>
 
             <div className="rounded-2xl border border-[var(--color-mist)] bg-[var(--color-shadow)] p-4 text-sm space-y-3">

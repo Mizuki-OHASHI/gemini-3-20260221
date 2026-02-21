@@ -134,8 +134,10 @@ async def generate_ghost(game_id: str, photo_id: str):
 
     ghost_prompt = f"""この写真に幽霊を合成してください。
 {appearance}
-幽霊の行動: 幽霊はただ泣いている。悲しげに佇んでいる
-元の写真の構図や雰囲気を保持したまま、半透明の幽霊を自然に重ねてください。"""
+幽霊の行動: 幽霊はただ泣いている。悲しげに涙を流して佇んでいる。
+元の写真の構図や雰囲気を保持したまま、幽霊を自然に重ねてください。
+ただし、幽霊は自然に人が写り込んでいるように、違和感がないようにしてください。
+半透明にはしないでください。"""
 
     # Generate ghost image via Gemini
     contents: list[types.Part] = []
