@@ -7,6 +7,4 @@
 
 export interface GameUpdateRequest {
   status?: string | null;
-  current_chapter?: number | null;
-  current_phase?: string | null;
 }

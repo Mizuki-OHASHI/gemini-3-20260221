@@ -5,11 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ScenarioChapter {
-  chapter: number;
-  title: string;
-  story: string;
-  hints: string[];
-  answer_keyword: string;
-  ghost_prompt_template: string;
+export interface HintMessage {
+  item: string;
+  message: string;
 }

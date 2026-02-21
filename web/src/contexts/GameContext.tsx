@@ -2,17 +2,17 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { api } from '../api/client'
 import type { TurnResponse } from '../api/model'
 
-interface ChapterInfo {
-  chapter: number
-  story: string
+interface HintInfo {
   item: string
+  message: string
+  ghostUrl: string | null
 }
 
 interface GameState {
   gameId: string | null
   clearedItems: string[]
   gameSolved: boolean
-  chapters: ChapterInfo[]
+  hints: HintInfo[]
   isInitializing: boolean
 }
 
@@ -25,7 +25,7 @@ const GameContext = createContext<GameContextValue | null>(null)
 
 const LS_GAME_ID = 'ghost_whisper_game_id'
 const LS_CLEARED = 'ghost_whisper_cleared_items'
-const LS_CHAPTERS = 'ghost_whisper_chapters'
+const LS_HINTS = 'ghost_whisper_hints'
 const LS_SOLVED = 'ghost_whisper_solved'
 
 function loadFromStorage(): Partial<GameState> {
@@ -33,7 +33,7 @@ function loadFromStorage(): Partial<GameState> {
     return {
       gameId: localStorage.getItem(LS_GAME_ID),
       clearedItems: JSON.parse(localStorage.getItem(LS_CLEARED) || '[]'),
-      chapters: JSON.parse(localStorage.getItem(LS_CHAPTERS) || '[]'),
+      hints: JSON.parse(localStorage.getItem(LS_HINTS) || '[]'),
       gameSolved: localStorage.getItem(LS_SOLVED) === 'true',
     }
   } catch {
@@ -41,17 +41,17 @@ function loadFromStorage(): Partial<GameState> {
   }
 }
 
-function saveToStorage(state: Pick<GameState, 'gameId' | 'clearedItems' | 'chapters' | 'gameSolved'>) {
+function saveToStorage(state: Pick<GameState, 'gameId' | 'clearedItems' | 'hints' | 'gameSolved'>) {
   if (state.gameId) localStorage.setItem(LS_GAME_ID, state.gameId)
   localStorage.setItem(LS_CLEARED, JSON.stringify(state.clearedItems))
-  localStorage.setItem(LS_CHAPTERS, JSON.stringify(state.chapters))
+  localStorage.setItem(LS_HINTS, JSON.stringify(state.hints))
   localStorage.setItem(LS_SOLVED, String(state.gameSolved))
 }
 
 function clearStorage() {
   localStorage.removeItem(LS_GAME_ID)
   localStorage.removeItem(LS_CLEARED)
-  localStorage.removeItem(LS_CHAPTERS)
+  localStorage.removeItem(LS_HINTS)
   localStorage.removeItem(LS_SOLVED)
 }
 
@@ -65,7 +65,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     gameId: null,
     clearedItems: [],
     gameSolved: false,
-    chapters: [],
+    hints: [],
     isInitializing: true,
   })
 
@@ -84,7 +84,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             gameId,
             clearedItems: res.data.cleared_items ?? stored.clearedItems ?? [],
             gameSolved: res.data.status === 'solved',
-            chapters: stored.chapters ?? [],
+            hints: stored.hints ?? [],
             isInitializing: false,
           })
           return
@@ -101,7 +101,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           gameId,
           clearedItems: [],
           gameSolved: false,
-          chapters: [],
+          hints: [],
           isInitializing: false,
         }
         saveToStorage(newState)
@@ -118,16 +118,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const updateFromTurn = useCallback((turn: TurnResponse) => {
     setState((prev) => {
-      const chapters = [...prev.chapters]
-      if (turn.detected_item && turn.story && turn.detected_chapter != null) {
-        const exists = chapters.some((c) => c.chapter === turn.detected_chapter)
+      const hints = [...prev.hints]
+      if (turn.detected_item && turn.hint_message) {
+        const exists = hints.some((h) => h.item === turn.detected_item)
         if (!exists) {
-          chapters.push({
-            chapter: turn.detected_chapter,
-            story: turn.story,
+          hints.push({
             item: turn.detected_item,
+            message: turn.hint_message,
+            ghostUrl: turn.ghost_url ?? null,
           })
-          chapters.sort((a, b) => a.chapter - b.chapter)
         }
       }
 
@@ -135,7 +134,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...prev,
         clearedItems: turn.cleared_items,
         gameSolved: turn.game_solved,
-        chapters,
+        hints,
       }
       saveToStorage(next)
       return next
@@ -151,7 +150,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         gameId,
         clearedItems: [],
         gameSolved: false,
-        chapters: [],
+        hints: [],
         isInitializing: false,
       }
       saveToStorage(newState)

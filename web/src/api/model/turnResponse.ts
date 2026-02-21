@@ -10,13 +10,12 @@ export interface TurnResponse {
   photo_id: string;
   original_url: string;
   detected_item?: string | null;
-  detected_chapter?: number | null;
   ghost_url?: string | null;
   ghost_message?: string | null;
   cleared_items: string[];
   items_remaining: string[];
   game_status: string;
   game_solved: boolean;
-  story?: string | null;
+  hint_message: string;
   message: string;
 }

@@ -8,31 +8,24 @@ from google.genai import types
 
 from app.firebase import bucket, db
 from app.gemini import client
-from app.scenario import load_chapters
+from app.scenario import get_game_items, load_hint_messages
 from app.schemas import TurnResponse, VisionDetectionResult
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/game/{game_id}", tags=["turn"])
 
-ALL_ITEMS = {"bookshelf", "clock", "mirror"}
-
 ITEM_LABELS = {
-    "bookshelf": "本棚",
+    "cup": "コップ",
+    "air_conditioner": "エアコン",
     "clock": "時計",
-    "mirror": "鏡",
-}
-
-# Map item -> chapter number for story lookup
-ITEM_CHAPTER_MAP = {
-    "bookshelf": 1,
-    "clock": 2,
-    "mirror": 3,
 }
 
 
 def _build_vision_prompt(remaining_items: list[str]) -> str:
-    items_str = ", ".join(f"{item}({ITEM_LABELS[item]})" for item in remaining_items)
+    items_str = ", ".join(
+        f"{item}({ITEM_LABELS.get(item, item)})" for item in remaining_items
+    )
     return f"""あなたは写真に写っているものを判定するAIです。
 残りアイテム: {items_str}
 この写真に上記アイテムのどれかが写っていますか？最も確信度の高いもの1つだけ回答してください。
@@ -42,10 +35,14 @@ JSON形式で回答:
 {{"detected_item": "アイテム名 or null", "confidence": "high/medium/low/none", "explanation": "判定理由"}}"""
 
 
-def _build_ghost_prompt(ghost_description: str, ghost_prompt_template: str) -> str:
+def _build_ghost_prompt(ghost_description: str, hint_message: str, detected_item: str | None) -> str:
+    if detected_item:
+        action = f"幽霊は{ITEM_LABELS.get(detected_item, detected_item)}を指さしている"
+    else:
+        action = "幽霊はただ泣いている。悲しげに佇んでいる"
     return f"""この写真に幽霊を合成してください。
 幽霊の外見: {ghost_description}
-幽霊の行動: {ghost_prompt_template}
+幽霊の行動: {action}
 元の写真の構図や雰囲気を保持したまま、半透明の幽霊を自然に重ねてください。"""
 
 
@@ -68,7 +65,8 @@ async def play_turn(game_id: str, file: UploadFile):
     cleared_items: list[str] = game_data.get("cleared_items", [])
 
     # 2. 残りアイテム計算
-    remaining_items = sorted(ALL_ITEMS - set(cleared_items))
+    all_items = get_game_items()
+    remaining_items = sorted(all_items - set(cleared_items))
     if not remaining_items:
         raise HTTPException(status_code=400, detail="All items already cleared")
 
@@ -87,40 +85,32 @@ async def play_turn(game_id: str, file: UploadFile):
     # 4. Vision 検出
     detection = await _detect_item(photo_bytes, remaining_items)
 
+    hint_messages = load_hint_messages()
     detected_item = None
-    detected_chapter = None
     ghost_url = None
     ghost_message = None
-    story = None
 
     if detection.detected_item and detection.confidence in ("high", "medium"):
         detected_item = detection.detected_item
-        detected_chapter = ITEM_CHAPTER_MAP.get(detected_item)
 
-        # チャプターのストーリーを取得
-        chapters = load_chapters()
-        chapter = chapters.get(detected_chapter)
-        if chapter:
-            story = chapter.story
-            ghost_prompt_template = chapter.ghost_prompt_template
-        else:
-            ghost_prompt_template = ""
+    # ヒントメッセージ取得
+    if detected_item:
+        hint_message = hint_messages.get(detected_item, "")
+    else:
+        hint_message = hint_messages.get("none", "")
 
-        # 5. Ghost 合成
-        try:
-            ghost_url, ghost_message = await _generate_ghost(
-                photo_bytes,
-                ghost_description,
-                ghost_prompt_template,
-                game_id,
-                seq,
-            )
-        except Exception:
-            logger.exception("Ghost generation failed")
-            # Ghost 生成失敗 → アイテム未クリア扱い
-            detected_item = None
-            detected_chapter = None
-            story = None
+    # 5. Ghost 合成（常に生成）
+    try:
+        ghost_url, ghost_message = await _generate_ghost(
+            photo_bytes,
+            ghost_description,
+            hint_message,
+            detected_item,
+            game_id,
+            seq,
+        )
+    except Exception:
+        logger.exception("Ghost generation failed")
 
     # 6. ゲーム状態更新
     update_data: dict = {
@@ -132,11 +122,12 @@ async def play_turn(game_id: str, file: UploadFile):
         cleared_items = list(set(cleared_items) | {detected_item})
         update_data["cleared_items"] = ArrayUnion([detected_item])
 
-    new_remaining = sorted(ALL_ITEMS - set(cleared_items))
+    new_remaining = sorted(all_items - set(cleared_items))
     game_solved = len(new_remaining) == 0
 
     if game_solved:
         update_data["status"] = "solved"
+        hint_message = hint_messages.get("final", hint_message)
 
     game_ref.update(update_data)
 
@@ -144,7 +135,6 @@ async def play_turn(game_id: str, file: UploadFile):
     photo_ref = db.collection("photos").document()
     photo_data = {
         "game_id": game_id,
-        "chapter": detected_chapter,
         "original_path": gcs_path,
         "original_url": original_url,
         "ghost_path": None,
@@ -158,27 +148,26 @@ async def play_turn(game_id: str, file: UploadFile):
 
     # 8. メッセージ生成
     if game_solved:
-        message = "おめでとうございます！すべてのアイテムを見つけ、幽霊の謎を解き明かしました。"
+        message = "おめでとうございます！すべての手がかりを見つけました。"
     elif detected_item:
         label = ITEM_LABELS.get(detected_item, detected_item)
-        message = f"{label}を発見しました！幽霊が現れています..."
+        message = f"{label}を発見しました！幽霊が何かを伝えています..."
     else:
         remaining_labels = [ITEM_LABELS.get(i, i) for i in new_remaining]
-        message = f"アイテムが見つかりませんでした。{', '.join(remaining_labels)}を探してみましょう。"
+        message = f"手がかりが見つかりませんでした。{', '.join(remaining_labels)}を探してみましょう。"
 
     return TurnResponse(
         game_id=game_id,
         photo_id=photo_ref.id,
         original_url=original_url,
         detected_item=detected_item,
-        detected_chapter=detected_chapter,
         ghost_url=ghost_url,
         ghost_message=ghost_message,
         cleared_items=cleared_items,
         items_remaining=new_remaining,
         game_status="solved" if game_solved else "playing",
         game_solved=game_solved,
-        story=story,
+        hint_message=hint_message,
         message=message,
     )
 
@@ -218,12 +207,13 @@ async def _detect_item(
 async def _generate_ghost(
     photo_bytes: bytes,
     ghost_description: str,
-    ghost_prompt_template: str,
+    hint_message: str,
+    detected_item: str | None,
     game_id: str,
     seq: str,
 ) -> tuple[str, str | None]:
     """Gemini で幽霊画像を合成し、GCS にアップロードする。"""
-    prompt = _build_ghost_prompt(ghost_description, ghost_prompt_template)
+    prompt = _build_ghost_prompt(ghost_description, hint_message, detected_item)
 
     response = await client.aio.models.generate_content(
         model="gemini-3-pro-image-preview",

@@ -1,7 +1,7 @@
 const ITEMS = [
-  { key: 'bookshelf', label: '本棚', icon: '📚' },
+  { key: 'cup', label: 'コップ', icon: '☕' },
+  { key: 'air_conditioner', label: 'エアコン', icon: '❄️' },
   { key: 'clock', label: '時計', icon: '🕰️' },
-  { key: 'mirror', label: '鏡', icon: '🪞' },
 ]
 
 export function ProgressIndicator({ clearedItems }: { clearedItems: string[] }) {
