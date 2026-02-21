@@ -8,7 +8,7 @@
 - 自宅に幽霊となって現れた恋人は喋れないが、指さしなどのジェスチャーでヒントをくれる
 - プレイヤーは自宅をカメラで撮影し、Gemini の画像生成 (NanoBanana) で幽霊の恋人が合成された画像を受け取る
 - 幽霊のヒントを元に、テキスト入力で推理したり、別の場所/物を撮影して調査を進める
-- コンテキスト画面で生前の二人のストーリーを閲覧できる
+- 「記憶の断片」画面で生前の二人のストーリーを閲覧できる
 - 最終的に犯人を特定するとクリア
 
 ### ゲームループ
@@ -48,17 +48,26 @@
 │   │       ├── game.py   # ゲーム CRUD
 │   │       ├── live.py   # Gemini Live WebSocket
 │   │       └── storage.py# ファイルアップロード
+│   ├── data/scenarios/   # シナリオ・チャプター定義
 │   ├── Dockerfile
 │   └── pyproject.toml
 ├── web/                  # React フロントエンド
 │   └── src/
 │       ├── App.tsx       # ルーティング
+│       ├── assets/       # ストーリーテキスト (ダイアログ等)
 │       ├── pages/
-│       │   ├── MainPage.tsx    # カメラ + メイン画面
-│       │   └── ContextPage.tsx # ストーリー閲覧
+│       │   ├── MainPage.tsx    # 撮影画面
+│       │   └── ContextPage.tsx # 記憶の断片
+│       ├── components/
+│       │   ├── Layout.tsx            # ナビ + ダークシェル
+│       │   └── ProgressIndicator.tsx # 手がかり進捗
+│       ├── contexts/
+│       │   └── GameContext.tsx  # ゲーム状態管理
 │       ├── hooks/
-│       │   └── useCamera.ts
-│       └── api/          # Orval 自動生成
+│       │   ├── useCamera.ts    # カメラ制御
+│       │   └── useGameTurn.ts  # ターン実行
+│       └── api/
+│           └── client.ts       # API クライアント
 └── gemini3.code-workspace
 ```
 
