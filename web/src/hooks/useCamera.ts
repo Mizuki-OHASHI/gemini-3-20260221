@@ -42,6 +42,9 @@ export function useCamera() {
   }, [])
 
   useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream
+    }
     return () => {
       stream?.getTracks().forEach((t) => t.stop())
     }
