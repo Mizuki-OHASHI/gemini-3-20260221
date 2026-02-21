@@ -25,6 +25,7 @@ export function MainPage() {
     playTurn,
     isLoading,
     lastResult,
+    capturedImage,
     error: turnError,
     dismissResult,
   } = useGameTurn();
@@ -79,8 +80,14 @@ export function MainPage() {
       <ProgressIndicator clearedItems={clearedItems} />
 
       <div className="relative aspect-[3/4] bg-[var(--color-dusk)] border border-[var(--color-mist)] rounded-2xl overflow-hidden">
-        {/* カメラフィード */}
-        {isActive ? (
+        {/* カメラフィード / キャプチャ画像 */}
+        {capturedImage ? (
+          <img
+            src={capturedImage}
+            alt="撮影した写真"
+            className="w-full h-full object-cover"
+          />
+        ) : isActive ? (
           <video
             ref={videoRef}
             autoPlay
@@ -102,11 +109,8 @@ export function MainPage() {
 
         {/* ローディングオーバーレイ */}
         {isLoading && (
-          <div className="absolute inset-0 bg-[var(--color-void)]/70 flex flex-col items-center justify-center gap-3">
-            <div className="w-10 h-10 border-4 border-[var(--color-spirit)]/30 border-t-[var(--color-spirit)] rounded-full animate-spin animate-shimmer" />
-            <p className="text-[var(--color-spirit)] text-sm font-medium animate-ghost-pulse">
-              霊感知中...
-            </p>
+          <div className="absolute inset-0 bg-[var(--color-void)]/50 flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-[var(--color-frost)]/30 border-t-[var(--color-frost)] rounded-full animate-spin" />
           </div>
         )}
 

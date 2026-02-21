@@ -7,6 +7,7 @@ interface UseGameTurnReturn {
   playTurn: (capture: () => string | null) => Promise<void>
   isLoading: boolean
   lastResult: TurnResponse | null
+  capturedImage: string | null
   error: string | null
   dismissResult: () => void
 }
@@ -27,6 +28,7 @@ export function useGameTurn(): UseGameTurnReturn {
   const [isLoading, setIsLoading] = useState(false)
   const [lastResult, setLastResult] = useState<TurnResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
 
   const playTurn = useCallback(
     async (capture: () => string | null) => {
@@ -42,6 +44,7 @@ export function useGameTurn(): UseGameTurnReturn {
           setIsLoading(false)
           return
         }
+        setCapturedImage(dataURL)
 
         const blob = dataURLtoBlob(dataURL)
         const res = await api.playTurnGameGameIdTurnPost(gameId, { file: blob })
@@ -62,8 +65,9 @@ export function useGameTurn(): UseGameTurnReturn {
 
   const dismissResult = useCallback(() => {
     setLastResult(null)
+    setCapturedImage(null)
     setError(null)
   }, [])
 
-  return { playTurn, isLoading, lastResult, error, dismissResult }
+  return { playTurn, isLoading, lastResult, capturedImage, error, dismissResult }
 }
