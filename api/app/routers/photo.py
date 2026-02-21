@@ -1,0 +1,178 @@
+import base64
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, HTTPException, UploadFile
+from google.genai import types
+
+from app.firebase import bucket, db
+from app.gemini import client
+from app.scenario import load_chapters
+from app.schemas import PhotoListResponse, PhotoResponse
+
+router = APIRouter(prefix="/game/{game_id}/photos", tags=["photo"])
+
+
+@router.post("/", response_model=PhotoResponse)
+async def upload_photo(game_id: str, file: UploadFile):
+    # Verify game exists
+    game_doc = db.collection("games").document(game_id).get()
+    if not game_doc.exists:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    game_data = game_doc.to_dict()
+    chapter = game_data.get("current_chapter", 1)
+    photo_count = game_data.get("photo_count", 0) + 1
+
+    # Upload to GCS
+    seq = f"{photo_count:03d}"
+    gcs_path = f"games/{game_id}/photos/{seq}_original.jpg"
+    blob = bucket.blob(gcs_path)
+    blob.upload_from_file(file.file, content_type=file.content_type or "image/jpeg")
+    blob.make_public()
+
+    now = datetime.now(timezone.utc)
+
+    # Save to Firestore
+    photo_ref = db.collection("photos").document()
+    photo_data = {
+        "game_id": game_id,
+        "chapter": chapter,
+        "original_path": gcs_path,
+        "original_url": blob.public_url,
+        "ghost_path": None,
+        "ghost_url": None,
+        "ghost_gesture": None,
+        "ghost_message": None,
+        "created_at": now,
+    }
+    photo_ref.set(photo_data)
+
+    # Update game photo count
+    db.collection("games").document(game_id).update(
+        {"photo_count": photo_count, "updated_at": now}
+    )
+
+    return PhotoResponse(
+        id=photo_ref.id,
+        game_id=game_id,
+        chapter=chapter,
+        original_url=blob.public_url,
+        created_at=now,
+    )
+
+
+@router.get("/", response_model=PhotoListResponse)
+async def list_photos(game_id: str):
+    docs = (
+        db.collection("photos")
+        .where("game_id", "==", game_id)
+        .order_by("created_at")
+        .stream()
+    )
+    photos = []
+    for doc in docs:
+        d = doc.to_dict()
+        photos.append(
+            PhotoResponse(
+                id=doc.id,
+                game_id=d["game_id"],
+                chapter=d["chapter"],
+                original_url=d["original_url"],
+                ghost_url=d.get("ghost_url"),
+                ghost_gesture=d.get("ghost_gesture"),
+                ghost_message=d.get("ghost_message"),
+                created_at=d["created_at"],
+            )
+        )
+    return PhotoListResponse(photos=photos)
+
+
+@router.get("/{photo_id}", response_model=PhotoResponse)
+async def get_photo(game_id: str, photo_id: str):
+    doc = db.collection("photos").document(photo_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    d = doc.to_dict()
+    if d["game_id"] != game_id:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return PhotoResponse(
+        id=doc.id,
+        game_id=d["game_id"],
+        chapter=d["chapter"],
+        original_url=d["original_url"],
+        ghost_url=d.get("ghost_url"),
+        ghost_gesture=d.get("ghost_gesture"),
+        ghost_message=d.get("ghost_message"),
+        created_at=d["created_at"],
+    )
+
+
+@router.post("/{photo_id}/ghost", response_model=PhotoResponse)
+async def generate_ghost(game_id: str, photo_id: str):
+    # Get photo
+    photo_doc = db.collection("photos").document(photo_id).get()
+    if not photo_doc.exists:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    photo_data = photo_doc.to_dict()
+    if photo_data["game_id"] != game_id:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    # Get ghost prompt from scenario
+    chapter_num = photo_data["chapter"]
+    chapters = load_chapters()
+    chapter = chapters.get(chapter_num)
+    if not chapter:
+        raise HTTPException(status_code=400, detail="Chapter not found")
+
+    # Generate ghost image via Gemini
+    response = await client.aio.models.generate_content(
+        model="gemini-2.0-flash-exp-image-generation",
+        contents=chapter.ghost_prompt_template,
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE", "TEXT"],
+        ),
+    )
+
+    ghost_image_data = None
+    ghost_mime_type = "image/jpeg"
+    ghost_message = None
+
+    for part in response.candidates[0].content.parts:
+        if part.inline_data:
+            ghost_image_data = part.inline_data.data
+            ghost_mime_type = part.inline_data.mime_type
+        elif part.text:
+            ghost_message = part.text
+
+    if not ghost_image_data:
+        raise HTTPException(status_code=500, detail="Failed to generate ghost image")
+
+    # Upload ghost image to GCS
+    original_path = photo_data["original_path"]
+    ghost_path = original_path.replace("_original.", "_ghost.")
+    blob = bucket.blob(ghost_path)
+    blob.upload_from_string(ghost_image_data, content_type=ghost_mime_type)
+    blob.make_public()
+
+    now = datetime.now(timezone.utc)
+
+    # Update Firestore
+    update_data = {
+        "ghost_path": ghost_path,
+        "ghost_url": blob.public_url,
+        "ghost_gesture": chapter.ghost_prompt_template,
+        "ghost_message": ghost_message,
+    }
+    db.collection("photos").document(photo_id).update(update_data)
+    db.collection("games").document(game_id).update({"updated_at": now})
+
+    return PhotoResponse(
+        id=photo_id,
+        game_id=game_id,
+        chapter=chapter_num,
+        original_url=photo_data["original_url"],
+        ghost_url=blob.public_url,
+        ghost_gesture=chapter.ghost_prompt_template,
+        ghost_message=ghost_message,
+        created_at=photo_data["created_at"],
+    )
