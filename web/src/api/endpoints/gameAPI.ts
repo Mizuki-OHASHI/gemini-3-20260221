@@ -12,6 +12,7 @@ import type {
 } from 'axios';
 
 import type {
+  AvatarResponse,
   BodyPlayTurnGameGameIdTurnPost,
   BodyUploadFileStorageUploadPost,
   BodyUploadPhotoGameGameIdPhotosPost,
@@ -22,12 +23,11 @@ import type {
   GenerateImageResponse,
   GenerateRequest,
   GenerateResponse,
+  HintMessage,
   PhotoListResponse,
   PhotoResponse,
   TurnResponse
 } from '../model';
-
-import type { HintMessage } from '../model/scenarioChapter';
 
 
 
@@ -66,6 +66,18 @@ const updateGameGameGameIdPatch = (
     return axiosInstance.patch(
       `/game/${gameId}`,
       gameUpdateRequest,options
+    );
+  }
+
+/**
+ * ghost_description からアバター画像を生成し GCS に保存する。
+ * @summary Generate Avatar
+ */
+const generateAvatarGameGameIdAvatarPost = (
+    gameId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AvatarResponse>> => {
+    return axiosInstance.post(
+      `/game/${gameId}/avatar`,undefined,options
     );
   }
 
@@ -169,9 +181,9 @@ const generateGhostGameGameIdPhotosPhotoIdGhostPost = (
   }
 
 /**
- * @summary List Hint Messages
+ * @summary List Hint Messages Endpoint
  */
-const listHintMessagesScenarioHintsGet = (
+const listHintMessagesEndpointScenarioHintsGet = (
      options?: AxiosRequestConfig
  ): Promise<AxiosResponse<HintMessage[]>> => {
     return axiosInstance.get(
@@ -216,10 +228,11 @@ const healthHealthGet = (
     );
   }
 
-return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listHintMessagesScenarioHintsGet,getHintMessageScenarioHintsItemGet,playTurnGameGameIdTurnPost,healthHealthGet}};
+return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,generateAvatarGameGameIdAvatarPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listHintMessagesEndpointScenarioHintsGet,getHintMessageScenarioHintsItemGet,playTurnGameGameIdTurnPost,healthHealthGet}};
 export type CreateGameGamePostResult = AxiosResponse<GameResponse>
 export type GetGameGameGameIdGetResult = AxiosResponse<GameResponse>
 export type UpdateGameGameGameIdPatchResult = AxiosResponse<GameResponse>
+export type GenerateAvatarGameGameIdAvatarPostResult = AxiosResponse<AvatarResponse>
 export type GenerateGeminiGeneratePostResult = AxiosResponse<GenerateResponse>
 export type GenerateImageGeminiGenerateImagePostResult = AxiosResponse<GenerateImageResponse>
 export type UploadFileStorageUploadPostResult = AxiosResponse<unknown>
@@ -228,7 +241,7 @@ export type UploadPhotoGameGameIdPhotosPostResult = AxiosResponse<PhotoResponse>
 export type ListPhotosGameGameIdPhotosGetResult = AxiosResponse<PhotoListResponse>
 export type GetPhotoGameGameIdPhotosPhotoIdGetResult = AxiosResponse<PhotoResponse>
 export type GenerateGhostGameGameIdPhotosPhotoIdGhostPostResult = AxiosResponse<PhotoResponse>
-export type ListHintMessagesScenarioHintsGetResult = AxiosResponse<HintMessage[]>
+export type ListHintMessagesEndpointScenarioHintsGetResult = AxiosResponse<HintMessage[]>
 export type GetHintMessageScenarioHintsItemGetResult = AxiosResponse<HintMessage>
 export type PlayTurnGameGameIdTurnPostResult = AxiosResponse<TurnResponse>
 export type HealthHealthGetResult = AxiosResponse<unknown>

@@ -85,12 +85,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /game/{game_id}/unlock-hint:
+  /game/{game_id}/avatar:
     post:
       tags:
       - game
-      summary: Unlock Hint
-      operationId: unlock_hint_game__game_id__unlock_hint_post
+      summary: Generate Avatar
+      description: ghost_description からアバター画像を生成し GCS に保存する。
+      operationId: generate_avatar_game__game_id__avatar_post
       parameters:
       - name: game_id
         in: path
@@ -98,51 +99,13 @@ paths:
         schema:
           type: string
           title: Game Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HintUnlockRequest'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /game/{game_id}/answer:
-    post:
-      tags:
-      - game
-      summary: Check Answer
-      operationId: check_answer_game__game_id__answer_post
-      parameters:
-      - name: game_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Game Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnswerRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnswerResponse'
+                $ref: '#/components/schemas/AvatarResponse'
         '422':
           description: Validation Error
           content:
@@ -369,12 +332,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /scenario/chapters:
+  /scenario/hints:
     get:
       tags:
       - scenario
-      summary: List Chapters
-      operationId: list_chapters_scenario_chapters_get
+      summary: List Hint Messages Endpoint
+      operationId: list_hint_messages_endpoint_scenario_hints_get
       responses:
         '200':
           description: Successful Response
@@ -382,29 +345,29 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/ScenarioChapter'
+                  $ref: '#/components/schemas/HintMessage'
                 type: array
-                title: Response List Chapters Scenario Chapters Get
-  /scenario/chapters/{chapter}:
+                title: Response List Hint Messages Endpoint Scenario Hints Get
+  /scenario/hints/{item}:
     get:
       tags:
       - scenario
-      summary: Get Chapter
-      operationId: get_chapter_scenario_chapters__chapter__get
+      summary: Get Hint Message
+      operationId: get_hint_message_scenario_hints__item__get
       parameters:
-      - name: chapter
+      - name: item
         in: path
         required: true
         schema:
-          type: integer
-          title: Chapter
+          type: string
+          title: Item
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScenarioChapter'
+                $ref: '#/components/schemas/HintMessage'
         '422':
           description: Validation Error
           content:
@@ -455,33 +418,19 @@ paths:
               schema: {}
 components:
   schemas:
-    AnswerRequest:
+    AvatarResponse:
       properties:
-        answer_text:
+        game_id:
           type: string
-          title: Answer Text
+          title: Game Id
+        avatar_url:
+          type: string
+          title: Avatar Url
       type: object
       required:
-      - answer_text
-      title: AnswerRequest
-    AnswerResponse:
-      properties:
-        correct:
-          type: boolean
-          title: Correct
-        message:
-          type: string
-          title: Message
-        next_chapter:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Next Chapter
-      type: object
-      required:
-      - correct
-      - message
-      title: AnswerResponse
+      - game_id
+      - avatar_url
+      title: AvatarResponse
     Body_play_turn_game__game_id__turn_post:
       properties:
         file:
@@ -536,17 +485,6 @@ components:
         status:
           type: string
           title: Status
-        current_chapter:
-          type: integer
-          title: Current Chapter
-        current_phase:
-          type: string
-          title: Current Phase
-        unlocked_hints:
-          items:
-            type: integer
-          type: array
-          title: Unlocked Hints
         photo_count:
           type: integer
           title: Photo Count
@@ -554,6 +492,11 @@ components:
           type: string
           title: Ghost Description
           default: ''
+        avatar_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Avatar Url
         cleared_items:
           items:
             type: string
@@ -573,9 +516,6 @@ components:
       - id
       - player_name
       - status
-      - current_chapter
-      - current_phase
-      - unlocked_hints
       - photo_count
       - created_at
       - updated_at
@@ -587,16 +527,6 @@ components:
           - type: string
           - type: 'null'
           title: Status
-        current_chapter:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Current Chapter
-        current_phase:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Current Phase
       type: object
       title: GameUpdateRequest
     GenerateImageRequest:
@@ -652,15 +582,19 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    HintUnlockRequest:
+    HintMessage:
       properties:
-        hint_index:
-          type: integer
-          title: Hint Index
+        item:
+          type: string
+          title: Item
+        message:
+          type: string
+          title: Message
       type: object
       required:
-      - hint_index
-      title: HintUnlockRequest
+      - item
+      - message
+      title: HintMessage
     PhotoListResponse:
       properties:
         photos:
@@ -680,9 +614,6 @@ components:
         game_id:
           type: string
           title: Game Id
-        chapter:
-          type: integer
-          title: Chapter
         original_url:
           type: string
           title: Original Url
@@ -701,6 +632,11 @@ components:
           - type: string
           - type: 'null'
           title: Ghost Message
+        detected_item:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detected Item
         created_at:
           type: string
           format: date-time
@@ -709,41 +645,9 @@ components:
       required:
       - id
       - game_id
-      - chapter
       - original_url
       - created_at
       title: PhotoResponse
-    ScenarioChapter:
-      properties:
-        chapter:
-          type: integer
-          title: Chapter
-        title:
-          type: string
-          title: Title
-        story:
-          type: string
-          title: Story
-        hints:
-          items:
-            type: string
-          type: array
-          title: Hints
-        answer_keyword:
-          type: string
-          title: Answer Keyword
-        ghost_prompt_template:
-          type: string
-          title: Ghost Prompt Template
-      type: object
-      required:
-      - chapter
-      - title
-      - story
-      - hints
-      - answer_keyword
-      - ghost_prompt_template
-      title: ScenarioChapter
     TurnResponse:
       properties:
         game_id:
@@ -760,11 +664,6 @@ components:
           - type: string
           - type: 'null'
           title: Detected Item
-        detected_chapter:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Detected Chapter
         ghost_url:
           anyOf:
           - type: string
@@ -791,11 +690,9 @@ components:
         game_solved:
           type: boolean
           title: Game Solved
-        story:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Story
+        hint_message:
+          type: string
+          title: Hint Message
         message:
           type: string
           title: Message
@@ -808,6 +705,7 @@ components:
       - items_remaining
       - game_status
       - game_solved
+      - hint_message
       - message
       title: TurnResponse
     ValidationError:

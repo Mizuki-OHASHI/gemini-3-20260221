@@ -11,6 +11,7 @@ export interface GameResponse {
   status: string;
   photo_count: number;
   ghost_description?: string;
+  avatar_url?: string | null;
   cleared_items?: string[];
   created_at: string;
   updated_at: string;
