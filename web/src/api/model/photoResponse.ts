@@ -8,10 +8,10 @@
 export interface PhotoResponse {
   id: string;
   game_id: string;
-  chapter: number;
   original_url: string;
   ghost_url?: string | null;
   ghost_gesture?: string | null;
   ghost_message?: string | null;
+  detected_item?: string | null;
   created_at: string;
 }

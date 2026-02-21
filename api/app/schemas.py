@@ -8,38 +8,28 @@ from pydantic import BaseModel
 
 class GameCreateRequest(BaseModel):
     player_name: str
+    ghost_description: str = "長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。"
 
 
 class GameResponse(BaseModel):
     id: str
     player_name: str
     status: str
-    current_chapter: int
-    current_phase: str
-    unlocked_hints: list[int]
     photo_count: int
+    ghost_description: str = ""
+    avatar_url: str | None = None
+    cleared_items: list[str] = []
     created_at: datetime
     updated_at: datetime
 
 
+class AvatarResponse(BaseModel):
+    game_id: str
+    avatar_url: str
+
+
 class GameUpdateRequest(BaseModel):
     status: str | None = None
-    current_chapter: int | None = None
-    current_phase: str | None = None
-
-
-class HintUnlockRequest(BaseModel):
-    hint_index: int
-
-
-class AnswerRequest(BaseModel):
-    answer_text: str
-
-
-class AnswerResponse(BaseModel):
-    correct: bool
-    message: str
-    next_chapter: int | None = None
 
 
 # --- Photo ---
@@ -48,11 +38,11 @@ class AnswerResponse(BaseModel):
 class PhotoResponse(BaseModel):
     id: str
     game_id: str
-    chapter: int
     original_url: str
     ghost_url: str | None = None
     ghost_gesture: str | None = None
     ghost_message: str | None = None
+    detected_item: str | None = None
     created_at: datetime
 
 
@@ -63,13 +53,33 @@ class PhotoListResponse(BaseModel):
 # --- Scenario ---
 
 
-class ScenarioChapter(BaseModel):
-    chapter: int
-    title: str
-    story: str
-    hints: list[str]
-    answer_keyword: str
-    ghost_prompt_template: str
+class HintMessage(BaseModel):
+    item: str
+    message: str
+
+
+# --- Turn ---
+
+
+class VisionDetectionResult(BaseModel):
+    detected_item: str | None = None
+    confidence: str  # "high" | "medium" | "low" | "none"
+    explanation: str
+
+
+class TurnResponse(BaseModel):
+    game_id: str
+    photo_id: str
+    original_url: str
+    detected_item: str | None = None
+    ghost_url: str | None = None
+    ghost_message: str | None = None
+    cleared_items: list[str]
+    items_remaining: list[str]
+    game_status: str  # "playing" | "solved"
+    game_solved: bool
+    hint_message: str
+    message: str
 
 
 # --- Gemini ---

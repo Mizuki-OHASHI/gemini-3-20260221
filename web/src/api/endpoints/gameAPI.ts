@@ -12,8 +12,8 @@ import type {
 } from 'axios';
 
 import type {
-  AnswerRequest,
-  AnswerResponse,
+  AvatarResponse,
+  BodyPlayTurnGameGameIdTurnPost,
   BodyUploadFileStorageUploadPost,
   BodyUploadPhotoGameGameIdPhotosPost,
   GameCreateRequest,
@@ -23,10 +23,10 @@ import type {
   GenerateImageResponse,
   GenerateRequest,
   GenerateResponse,
-  HintUnlockRequest,
+  HintMessage,
   PhotoListResponse,
   PhotoResponse,
-  ScenarioChapter
+  TurnResponse
 } from '../model';
 
 
@@ -70,28 +70,14 @@ const updateGameGameGameIdPatch = (
   }
 
 /**
- * @summary Unlock Hint
+ * ghost_description からアバター画像を生成し GCS に保存する。
+ * @summary Generate Avatar
  */
-const unlockHintGameGameIdUnlockHintPost = (
-    gameId: string,
-    hintUnlockRequest: HintUnlockRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<GameResponse>> => {
+const generateAvatarGameGameIdAvatarPost = (
+    gameId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AvatarResponse>> => {
     return axiosInstance.post(
-      `/game/${gameId}/unlock-hint`,
-      hintUnlockRequest,options
-    );
-  }
-
-/**
- * @summary Check Answer
- */
-const checkAnswerGameGameIdAnswerPost = (
-    gameId: string,
-    answerRequest: AnswerRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<AnswerResponse>> => {
-    return axiosInstance.post(
-      `/game/${gameId}/answer`,
-      answerRequest,options
+      `/game/${gameId}/avatar`,undefined,options
     );
   }
 
@@ -195,24 +181,39 @@ const generateGhostGameGameIdPhotosPhotoIdGhostPost = (
   }
 
 /**
- * @summary List Chapters
+ * @summary List Hint Messages Endpoint
  */
-const listChaptersScenarioChaptersGet = (
+const listHintMessagesEndpointScenarioHintsGet = (
      options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ScenarioChapter[]>> => {
+ ): Promise<AxiosResponse<HintMessage[]>> => {
     return axiosInstance.get(
-      `/scenario/chapters`,options
+      `/scenario/hints`,options
     );
   }
 
 /**
- * @summary Get Chapter
+ * @summary Get Hint Message
  */
-const getChapterScenarioChaptersChapterGet = (
-    chapter: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ScenarioChapter>> => {
+const getHintMessageScenarioHintsItemGet = (
+    item: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<HintMessage>> => {
     return axiosInstance.get(
-      `/scenario/chapters/${chapter}`,options
+      `/scenario/hints/${item}`,options
+    );
+  }
+
+/**
+ * @summary Play Turn
+ */
+const playTurnGameGameIdTurnPost = (
+    gameId: string,
+    bodyPlayTurnGameGameIdTurnPost: BodyPlayTurnGameGameIdTurnPost, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<TurnResponse>> => {const formData = new FormData();
+formData.append(`file`, bodyPlayTurnGameGameIdTurnPost.file);
+
+    return axiosInstance.post(
+      `/game/${gameId}/turn`,
+      formData,options
     );
   }
 
@@ -227,12 +228,11 @@ const healthHealthGet = (
     );
   }
 
-return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,unlockHintGameGameIdUnlockHintPost,checkAnswerGameGameIdAnswerPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listChaptersScenarioChaptersGet,getChapterScenarioChaptersChapterGet,healthHealthGet}};
+return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,generateAvatarGameGameIdAvatarPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listHintMessagesEndpointScenarioHintsGet,getHintMessageScenarioHintsItemGet,playTurnGameGameIdTurnPost,healthHealthGet}};
 export type CreateGameGamePostResult = AxiosResponse<GameResponse>
 export type GetGameGameGameIdGetResult = AxiosResponse<GameResponse>
 export type UpdateGameGameGameIdPatchResult = AxiosResponse<GameResponse>
-export type UnlockHintGameGameIdUnlockHintPostResult = AxiosResponse<GameResponse>
-export type CheckAnswerGameGameIdAnswerPostResult = AxiosResponse<AnswerResponse>
+export type GenerateAvatarGameGameIdAvatarPostResult = AxiosResponse<AvatarResponse>
 export type GenerateGeminiGeneratePostResult = AxiosResponse<GenerateResponse>
 export type GenerateImageGeminiGenerateImagePostResult = AxiosResponse<GenerateImageResponse>
 export type UploadFileStorageUploadPostResult = AxiosResponse<unknown>
@@ -241,6 +241,7 @@ export type UploadPhotoGameGameIdPhotosPostResult = AxiosResponse<PhotoResponse>
 export type ListPhotosGameGameIdPhotosGetResult = AxiosResponse<PhotoListResponse>
 export type GetPhotoGameGameIdPhotosPhotoIdGetResult = AxiosResponse<PhotoResponse>
 export type GenerateGhostGameGameIdPhotosPhotoIdGhostPostResult = AxiosResponse<PhotoResponse>
-export type ListChaptersScenarioChaptersGetResult = AxiosResponse<ScenarioChapter[]>
-export type GetChapterScenarioChaptersChapterGetResult = AxiosResponse<ScenarioChapter>
+export type ListHintMessagesEndpointScenarioHintsGetResult = AxiosResponse<HintMessage[]>
+export type GetHintMessageScenarioHintsItemGetResult = AxiosResponse<HintMessage>
+export type PlayTurnGameGameIdTurnPostResult = AxiosResponse<TurnResponse>
 export type HealthHealthGetResult = AxiosResponse<unknown>

@@ -1,4 +1,3 @@
-import base64
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, UploadFile
@@ -6,7 +5,7 @@ from google.genai import types
 
 from app.firebase import bucket, db
 from app.gemini import client
-from app.scenario import load_chapters
+from app.scenario import load_hint_messages
 from app.schemas import PhotoListResponse, PhotoResponse
 
 router = APIRouter(prefix="/game/{game_id}/photos", tags=["photo"])
@@ -20,7 +19,6 @@ async def upload_photo(game_id: str, file: UploadFile):
         raise HTTPException(status_code=404, detail="Game not found")
 
     game_data = game_doc.to_dict()
-    chapter = game_data.get("current_chapter", 1)
     photo_count = game_data.get("photo_count", 0) + 1
 
     # Upload to GCS
@@ -36,7 +34,6 @@ async def upload_photo(game_id: str, file: UploadFile):
     photo_ref = db.collection("photos").document()
     photo_data = {
         "game_id": game_id,
-        "chapter": chapter,
         "original_path": gcs_path,
         "original_url": blob.public_url,
         "ghost_path": None,
@@ -55,7 +52,6 @@ async def upload_photo(game_id: str, file: UploadFile):
     return PhotoResponse(
         id=photo_ref.id,
         game_id=game_id,
-        chapter=chapter,
         original_url=blob.public_url,
         created_at=now,
     )
@@ -76,11 +72,11 @@ async def list_photos(game_id: str):
             PhotoResponse(
                 id=doc.id,
                 game_id=d["game_id"],
-                chapter=d["chapter"],
                 original_url=d["original_url"],
                 ghost_url=d.get("ghost_url"),
                 ghost_gesture=d.get("ghost_gesture"),
                 ghost_message=d.get("ghost_message"),
+                detected_item=d.get("detected_item"),
                 created_at=d["created_at"],
             )
         )
@@ -98,11 +94,11 @@ async def get_photo(game_id: str, photo_id: str):
     return PhotoResponse(
         id=doc.id,
         game_id=d["game_id"],
-        chapter=d["chapter"],
         original_url=d["original_url"],
         ghost_url=d.get("ghost_url"),
         ghost_gesture=d.get("ghost_gesture"),
         ghost_message=d.get("ghost_message"),
+        detected_item=d.get("detected_item"),
         created_at=d["created_at"],
     )
 
@@ -117,17 +113,47 @@ async def generate_ghost(game_id: str, photo_id: str):
     if photo_data["game_id"] != game_id:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    # Get ghost prompt from scenario
-    chapter_num = photo_data["chapter"]
-    chapters = load_chapters()
-    chapter = chapters.get(chapter_num)
-    if not chapter:
-        raise HTTPException(status_code=400, detail="Chapter not found")
+    # Get game data for ghost description
+    game_doc = db.collection("games").document(game_id).get()
+    if not game_doc.exists:
+        raise HTTPException(status_code=404, detail="Game not found")
+    game_data = game_doc.to_dict()
+    avatar_url: str | None = game_data.get("avatar_url")
+
+    # Get hint messages
+    hint_messages = load_hint_messages()
+
+    if avatar_url:
+        appearance = "添付のアバター画像の人物を幽霊として合成してください。"
+    else:
+        ghost_description = game_data.get(
+            "ghost_description",
+            "長い黒髪の少女の幽霊。白いワンピースを着て、悲しげな表情をしている。",
+        )
+        appearance = f"幽霊の外見: {ghost_description}"
+
+    ghost_prompt = f"""この写真に幽霊を合成してください。
+{appearance}
+幽霊の行動: 幽霊はただ泣いている。悲しげに佇んでいる
+元の写真の構図や雰囲気を保持したまま、半透明の幽霊を自然に重ねてください。"""
 
     # Generate ghost image via Gemini
+    contents: list[types.Part] = []
+    if avatar_url:
+        avatar_blob_name = avatar_url.split(f"/{bucket.name}/")[-1]
+        avatar_blob = bucket.blob(avatar_blob_name)
+        avatar_bytes = avatar_blob.download_as_bytes()
+        contents.append(types.Part.from_bytes(data=avatar_bytes, mime_type="image/png"))
+
+    # 元の写真を取得して添付
+    original_blob = bucket.blob(photo_data["original_path"])
+    original_bytes = original_blob.download_as_bytes()
+    contents.append(types.Part.from_bytes(data=original_bytes, mime_type="image/jpeg"))
+    contents.append(types.Part.from_text(text=ghost_prompt))
+
     response = await client.aio.models.generate_content(
         model="gemini-2.0-flash-exp-image-generation",
-        contents=chapter.ghost_prompt_template,
+        contents=contents,
         config=types.GenerateContentConfig(
             response_modalities=["IMAGE", "TEXT"],
         ),
@@ -160,7 +186,7 @@ async def generate_ghost(game_id: str, photo_id: str):
     update_data = {
         "ghost_path": ghost_path,
         "ghost_url": blob.public_url,
-        "ghost_gesture": chapter.ghost_prompt_template,
+        "ghost_gesture": hint_messages.get("none", ""),
         "ghost_message": ghost_message,
     }
     db.collection("photos").document(photo_id).update(update_data)
@@ -169,10 +195,9 @@ async def generate_ghost(game_id: str, photo_id: str):
     return PhotoResponse(
         id=photo_id,
         game_id=game_id,
-        chapter=chapter_num,
         original_url=photo_data["original_url"],
         ghost_url=blob.public_url,
-        ghost_gesture=chapter.ghost_prompt_template,
+        ghost_gesture=hint_messages.get("none", ""),
         ghost_message=ghost_message,
         created_at=photo_data["created_at"],
     )

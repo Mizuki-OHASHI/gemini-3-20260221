@@ -5,8 +5,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AnswerResponse {
-  correct: boolean;
-  message: string;
-  next_chapter?: number | null;
+export interface BodyPlayTurnGameGameIdTurnPost {
+  file: Blob;
 }

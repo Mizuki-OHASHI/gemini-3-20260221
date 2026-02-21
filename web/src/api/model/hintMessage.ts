@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HintUnlockRequest {
-  hint_index: number;
+export interface HintMessage {
+  item: string;
+  message: string;
 }

@@ -7,4 +7,5 @@
 
 export interface GameCreateRequest {
   player_name: string;
+  ghost_description?: string;
 }

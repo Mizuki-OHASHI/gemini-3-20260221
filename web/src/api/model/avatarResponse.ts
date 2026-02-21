@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AnswerRequest {
-  answer_text: string;
+export interface AvatarResponse {
+  game_id: string;
+  avatar_url: string;
 }
