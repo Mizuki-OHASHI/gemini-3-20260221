@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCamera } from '../hooks/useCamera'
 import { useGameTurn } from '../hooks/useGameTurn'
 import { useGame } from '../contexts/GameContext'
@@ -8,19 +9,26 @@ import { PreludePage } from './PreludePage'
 const PRELUDE_SEEN_KEY = 'prelude_seen_v1'
 
 export function MainPage() {
+  const navigate = useNavigate()
   const [showPrelude, setShowPrelude] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.sessionStorage.getItem(PRELUDE_SEEN_KEY) !== '1'
   })
   const { videoRef, isActive, error: cameraError, start, capture } = useCamera()
   const { playTurn, isLoading, lastResult, error: turnError, dismissResult } = useGameTurn()
-  const { clearedItems, gameSolved, isInitializing, resetGame } = useGame()
+  const { clearedItems, gameSolved, isInitializing } = useGame()
 
   useEffect(() => {
     if (!showPrelude) {
       start()
     }
   }, [showPrelude, start])
+
+  useEffect(() => {
+    if (gameSolved) {
+      navigate('/ending?result=success', { replace: true })
+    }
+  }, [gameSolved, navigate])
 
   if (showPrelude) {
     return (
@@ -110,25 +118,6 @@ export function MainPage() {
           </div>
         )}
 
-        {/* ゲーム完了オーバーレイ */}
-        {gameSolved && (
-          <div className="absolute inset-0 bg-[var(--color-void)]/85 flex flex-col items-center justify-center gap-4 p-6">
-            <h2 className="text-[var(--color-frost)] text-xl font-bold text-center">
-              犯人は見つかり、逮捕された。
-            </h2>
-            <p className="text-[var(--color-spirit)] text-sm text-center leading-relaxed">
-              でも澪はもう帰ってこない。<br />
-              これからも部屋で<br />
-              見守ってくれるのだろうか。
-            </p>
-            <button
-              onClick={resetGame}
-              className="mt-2 px-6 py-2 border border-[var(--color-mist)] text-[var(--color-ash)] rounded-full text-sm hover:border-[var(--color-phantom)] hover:text-[var(--color-whisper)] transition-colors"
-            >
-              はじめから
-            </button>
-          </div>
-        )}
       </div>
 
       {/* エラー表示 */}
@@ -140,7 +129,7 @@ export function MainPage() {
 
       {/* シャッターボタン */}
       {!gameSolved && (
-        <div className="flex justify-center py-2">
+        <div className="flex flex-col items-center py-2 gap-3">
           <button
             onClick={handleShutter}
             disabled={isLoading || !isActive}
@@ -157,6 +146,12 @@ export function MainPage() {
             ) : (
               <div className="w-12 h-12 rounded-full bg-[var(--color-shadow)] border-2 border-[var(--color-mist)]" />
             )}
+          </button>
+          <button
+            onClick={() => navigate('/ending?result=escape')}
+            className="text-xs text-[var(--color-ash)] underline underline-offset-4"
+          >
+            捜査を打ち切る
           </button>
         </div>
       )}
