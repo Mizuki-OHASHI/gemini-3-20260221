@@ -8,5 +8,6 @@ dependencies = [
     "firebase-admin>=7.1.0",
     "google-genai>=1.64.0",
     "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.22",
     "uvicorn[standard]>=0.41.0",
 ]
