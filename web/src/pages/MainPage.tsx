@@ -1,55 +1,77 @@
-import { useEffect, useState } from 'react'
-import { useCamera } from '../hooks/useCamera'
-import { useGameTurn } from '../hooks/useGameTurn'
-import { useGame } from '../contexts/GameContext'
-import { ProgressIndicator } from '../components/ProgressIndicator'
-import { PreludePage } from './PreludePage'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCamera } from "../hooks/useCamera";
+import { useGameTurn } from "../hooks/useGameTurn";
+import { useGame } from "../contexts/GameContext";
+import { ProgressIndicator } from "../components/ProgressIndicator";
+import { PreludePage } from "./PreludePage";
 
-const PRELUDE_SEEN_KEY = 'prelude_seen_v1'
+const PRELUDE_SEEN_KEY = "prelude_seen_v1";
 
 export function MainPage() {
+  const navigate = useNavigate();
   const [showPrelude, setShowPrelude] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return window.sessionStorage.getItem(PRELUDE_SEEN_KEY) !== '1'
-  })
-  const { videoRef, isActive, error: cameraError, start, capture } = useCamera()
-  const { playTurn, isLoading, lastResult, error: turnError, dismissResult } = useGameTurn()
-  const { gameId, clearedItems, gameSolved, isInitializing, resetGame } = useGame()
+    if (typeof window === "undefined") return false;
+    return window.sessionStorage.getItem(PRELUDE_SEEN_KEY) !== "1";
+  });
+  const {
+    videoRef,
+    isActive,
+    error: cameraError,
+    start,
+    capture,
+  } = useCamera();
+  const {
+    playTurn,
+    isLoading,
+    lastResult,
+    error: turnError,
+    dismissResult,
+  } = useGameTurn();
+  const { gameId, clearedItems, gameSolved, isInitializing } = useGame();
 
   // gameId がない場合（リセット後など）も PreludePage を表示
-  const needsPrelude = showPrelude || !gameId
+  const needsPrelude = showPrelude || !gameId;
 
   useEffect(() => {
     if (!needsPrelude) {
-      start()
+      start();
     }
-  }, [needsPrelude, start])
+  }, [needsPrelude, start]);
+
+  useEffect(() => {
+    if (gameSolved) {
+      navigate("/ending?result=success", { replace: true });
+    }
+  }, [gameSolved, navigate]);
 
   if (needsPrelude) {
     return (
       <PreludePage
         onComplete={() => {
-          window.sessionStorage.setItem(PRELUDE_SEEN_KEY, '1')
-          setShowPrelude(false)
+          window.sessionStorage.setItem(PRELUDE_SEEN_KEY, "1");
+          setShowPrelude(false);
         }}
       />
-    )
+    );
   }
 
   const handleShutter = () => {
     if (lastResult) {
-      dismissResult()
-      return
+      dismissResult();
+      return;
     }
-    playTurn(capture)
-  }
+    playTurn(capture);
+  };
 
   if (isInitializing) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-[var(--color-ash)] animate-ghost-pulse">ゲームを読み込み中...</p>
+        <p className="text-[var(--color-ash)] animate-ghost-pulse">
+          ゲームを読み込み中...
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -82,7 +104,9 @@ export function MainPage() {
         {isLoading && (
           <div className="absolute inset-0 bg-[var(--color-void)]/70 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 border-4 border-[var(--color-spirit)]/30 border-t-[var(--color-spirit)] rounded-full animate-spin animate-shimmer" />
-            <p className="text-[var(--color-spirit)] text-sm font-medium animate-ghost-pulse">霊感知中...</p>
+            <p className="text-[var(--color-spirit)] text-sm font-medium animate-ghost-pulse">
+              霊感知中...
+            </p>
           </div>
         )}
 
@@ -112,26 +136,6 @@ export function MainPage() {
             </div>
           </div>
         )}
-
-        {/* ゲーム完了オーバーレイ */}
-        {gameSolved && (
-          <div className="absolute inset-0 bg-[var(--color-void)]/85 flex flex-col items-center justify-center gap-4 p-6">
-            <h2 className="text-[var(--color-frost)] text-xl font-bold text-center">
-              犯人は見つかり、逮捕された。
-            </h2>
-            <p className="text-[var(--color-spirit)] text-sm text-center leading-relaxed">
-              でも澪はもう帰ってこない。<br />
-              これからも部屋で<br />
-              見守ってくれるのだろうか。
-            </p>
-            <button
-              onClick={resetGame}
-              className="mt-2 px-6 py-2 border border-[var(--color-mist)] text-[var(--color-ash)] rounded-full text-sm hover:border-[var(--color-phantom)] hover:text-[var(--color-whisper)] transition-colors"
-            >
-              はじめから
-            </button>
-          </div>
-        )}
       </div>
 
       {/* エラー表示 */}
@@ -143,26 +147,34 @@ export function MainPage() {
 
       {/* シャッターボタン */}
       {!gameSolved && (
-        <div className="flex justify-center py-2">
+        <div className="flex flex-col items-center py-2 gap-3">
           <button
             onClick={handleShutter}
             disabled={isLoading || !isActive}
             className={`w-16 h-16 rounded-full border-4 transition-all ${
               isLoading || !isActive
-                ? 'border-[var(--color-mist)] bg-[var(--color-dusk)] cursor-not-allowed'
+                ? "border-[var(--color-mist)] bg-[var(--color-dusk)] cursor-not-allowed"
                 : lastResult
-                  ? 'border-[var(--color-phantom)] bg-[var(--color-phantom)]/20 shadow-[var(--glow-phantom)] active:bg-[var(--color-phantom)]/40'
-                  : 'border-[var(--color-mist)] bg-[var(--color-shadow)] active:bg-[var(--color-dusk)] active:scale-95'
+                  ? "border-[var(--color-phantom)] bg-[var(--color-phantom)]/20 shadow-[var(--glow-phantom)] active:bg-[var(--color-phantom)]/40"
+                  : "border-[var(--color-mist)] bg-[var(--color-shadow)] active:bg-[var(--color-dusk)] active:scale-95"
             } flex items-center justify-center`}
           >
             {lastResult ? (
-              <span className="text-[var(--color-frost)] text-xs font-bold">再撮影</span>
+              <span className="text-[var(--color-frost)] text-xs font-bold">
+                再撮影
+              </span>
             ) : (
               <div className="w-12 h-12 rounded-full bg-[var(--color-shadow)] border-2 border-[var(--color-mist)]" />
             )}
           </button>
+          <button
+            onClick={() => navigate("/ending?result=escape")}
+            className="text-xs text-[var(--color-ash)] underline underline-offset-4"
+          >
+            捜査を打ち切る
+          </button>
         </div>
       )}
     </div>
-  )
+  );
 }
