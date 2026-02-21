@@ -5,6 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './accusationRequest';
+export * from './accusationResponse';
 export * from './avatarResponse';
 export * from './bodyPlayTurnGameGameIdTurnPost';
 export * from './bodyUploadFileStorageUploadPost';
@@ -20,7 +22,6 @@ export * from './hintMessage';
 export * from './hTTPValidationError';
 export * from './photoListResponse';
 export * from './photoResponse';
-export * from './scenarioChapter';
 export * from './turnResponse';
 export * from './validationError';
 export * from './validationErrorCtx';

@@ -12,6 +12,8 @@ import type {
 } from 'axios';
 
 import type {
+  AccusationRequest,
+  AccusationResponse,
   AvatarResponse,
   BodyPlayTurnGameGameIdTurnPost,
   BodyUploadFileStorageUploadPost,
@@ -78,6 +80,20 @@ const generateAvatarGameGameIdAvatarPost = (
  ): Promise<AxiosResponse<AvatarResponse>> => {
     return axiosInstance.post(
       `/game/${gameId}/avatar`,undefined,options
+    );
+  }
+
+/**
+ * 犯人を告発し、LLMで正誤判定する。
+ * @summary Accuse
+ */
+const accuseGameGameIdAccusePost = (
+    gameId: string,
+    accusationRequest: AccusationRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AccusationResponse>> => {
+    return axiosInstance.post(
+      `/game/${gameId}/accuse`,
+      accusationRequest,options
     );
   }
 
@@ -228,11 +244,12 @@ const healthHealthGet = (
     );
   }
 
-return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,generateAvatarGameGameIdAvatarPost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listHintMessagesEndpointScenarioHintsGet,getHintMessageScenarioHintsItemGet,playTurnGameGameIdTurnPost,healthHealthGet}};
+return {createGameGamePost,getGameGameGameIdGet,updateGameGameGameIdPatch,generateAvatarGameGameIdAvatarPost,accuseGameGameIdAccusePost,generateGeminiGeneratePost,generateImageGeminiGenerateImagePost,uploadFileStorageUploadPost,getSignedUrlStorageUrlPathGet,uploadPhotoGameGameIdPhotosPost,listPhotosGameGameIdPhotosGet,getPhotoGameGameIdPhotosPhotoIdGet,generateGhostGameGameIdPhotosPhotoIdGhostPost,listHintMessagesEndpointScenarioHintsGet,getHintMessageScenarioHintsItemGet,playTurnGameGameIdTurnPost,healthHealthGet}};
 export type CreateGameGamePostResult = AxiosResponse<GameResponse>
 export type GetGameGameGameIdGetResult = AxiosResponse<GameResponse>
 export type UpdateGameGameGameIdPatchResult = AxiosResponse<GameResponse>
 export type GenerateAvatarGameGameIdAvatarPostResult = AxiosResponse<AvatarResponse>
+export type AccuseGameGameIdAccusePostResult = AxiosResponse<AccusationResponse>
 export type GenerateGeminiGeneratePostResult = AxiosResponse<GenerateResponse>
 export type GenerateImageGeminiGenerateImagePostResult = AxiosResponse<GenerateImageResponse>
 export type UploadFileStorageUploadPostResult = AxiosResponse<unknown>

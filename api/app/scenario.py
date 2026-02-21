@@ -22,3 +22,9 @@ def load_hint_messages() -> dict[str, str]:
 def get_game_items() -> set[str]:
     """Return the set of detectable item keys (excluding none/final)."""
     return set(load_hint_messages().keys()) - SPECIAL_KEYS
+
+
+@lru_cache(maxsize=1)
+def load_solution() -> str:
+    """Load the correct solution from solution.txt."""
+    return (DATA_DIR / "solution.txt").read_text(encoding="utf-8")

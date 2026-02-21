@@ -82,6 +82,24 @@ class TurnResponse(BaseModel):
     message: str
 
 
+# --- Accusation ---
+
+
+class AccusationRequest(BaseModel):
+    suspect_name: str
+    reason: str
+
+
+class AccusationJudgment(BaseModel):
+    correct: bool
+    explanation: str
+
+
+class AccusationResponse(BaseModel):
+    correct: bool
+    message: str
+
+
 # --- Gemini ---
 
 

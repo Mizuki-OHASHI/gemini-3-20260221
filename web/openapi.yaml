@@ -112,6 +112,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /game/{game_id}/accuse:
+    post:
+      tags:
+      - game
+      summary: Accuse
+      description: 犯人を告発し、LLMで正誤判定する。
+      operationId: accuse_game__game_id__accuse_post
+      parameters:
+      - name: game_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Game Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccusationRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccusationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /gemini/generate:
     post:
       tags:
@@ -418,6 +451,32 @@ paths:
               schema: {}
 components:
   schemas:
+    AccusationRequest:
+      properties:
+        suspect_name:
+          type: string
+          title: Suspect Name
+        reason:
+          type: string
+          title: Reason
+      type: object
+      required:
+      - suspect_name
+      - reason
+      title: AccusationRequest
+    AccusationResponse:
+      properties:
+        correct:
+          type: boolean
+          title: Correct
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - correct
+      - message
+      title: AccusationResponse
     AvatarResponse:
       properties:
         game_id:

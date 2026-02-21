@@ -126,10 +126,9 @@ async def play_turn(game_id: str, file: UploadFile):
         update_data["cleared_items"] = ArrayUnion([detected_item])
 
     new_remaining = sorted(all_items - set(cleared_items))
-    game_solved = len(new_remaining) == 0
+    all_cleared = len(new_remaining) == 0
 
-    if game_solved:
-        update_data["status"] = "solved"
+    if all_cleared:
         hint_message = hint_messages.get("final", hint_message)
 
     game_ref.update(update_data)
@@ -150,8 +149,8 @@ async def play_turn(game_id: str, file: UploadFile):
     photo_ref.set(photo_data)
 
     # 8. メッセージ生成
-    if game_solved:
-        message = "おめでとうございます！すべての手がかりを見つけました。"
+    if all_cleared:
+        message = "すべての手がかりが揃いました。犯人を指名してください。"
     elif detected_item:
         label = ITEM_LABELS.get(detected_item, detected_item)
         message = f"{label}を発見しました！幽霊が何かを伝えています..."
@@ -169,8 +168,8 @@ async def play_turn(game_id: str, file: UploadFile):
         ghost_message=ghost_message,
         cleared_items=cleared_items,
         items_remaining=new_remaining,
-        game_status="solved" if game_solved else "playing",
-        game_solved=game_solved,
+        game_status="playing",
+        game_solved=False,
         hint_message=hint_message,
         message=message,
     )

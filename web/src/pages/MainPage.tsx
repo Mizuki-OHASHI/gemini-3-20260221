@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useCamera } from "../hooks/useCamera";
 import { useGameTurn } from "../hooks/useGameTurn";
 import { useGame } from "../contexts/GameContext";
+import { AccusationOverlay } from "../components/AccusationOverlay";
 import { ProgressIndicator } from "../components/ProgressIndicator";
 import { PreludePage } from "./PreludePage";
+
+const ALL_ITEM_COUNT = 3;
 
 const PRELUDE_SEEN_KEY = "prelude_seen_v1";
 
@@ -14,6 +17,7 @@ export function MainPage() {
     if (typeof window === "undefined") return false;
     return window.sessionStorage.getItem(PRELUDE_SEEN_KEY) !== "1";
   });
+  const [showAccusation, setShowAccusation] = useState(false);
   const {
     videoRef,
     isActive,
@@ -78,6 +82,15 @@ export function MainPage() {
   return (
     <div className="flex flex-col h-full p-4 gap-3">
       <ProgressIndicator clearedItems={clearedItems} />
+
+      {clearedItems.length >= ALL_ITEM_COUNT && !gameSolved && (
+        <button
+          onClick={() => setShowAccusation(true)}
+          className="w-full py-3 rounded-full border border-[var(--color-spirit)] text-[var(--color-spirit)] font-bold text-sm animate-ghost-pulse"
+        >
+          手がかりは揃った ── 犯人を指名する
+        </button>
+      )}
 
       <div className="relative aspect-[3/4] bg-[var(--color-dusk)] border border-[var(--color-mist)] rounded-2xl overflow-hidden">
         {/* カメラフィード */}
@@ -181,6 +194,13 @@ export function MainPage() {
             捜査を打ち切る
           </button>
         </div>
+      )}
+
+      {showAccusation && (
+        <AccusationOverlay
+          onCorrect={() => setShowAccusation(false)}
+          onClose={() => setShowAccusation(false)}
+        />
       )}
     </div>
   );

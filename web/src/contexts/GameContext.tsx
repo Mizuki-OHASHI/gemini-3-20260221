@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import { api } from '../api/client'
-import type { TurnResponse } from '../api/model'
+import type { AccusationResponse, TurnResponse } from '../api/model'
 
 interface HintInfo {
   item: string
@@ -23,6 +23,7 @@ interface GameContextValue extends GameState {
   resetGame: () => Promise<void>
   createGame: (ghostDescription?: string) => Promise<string>
   generateAvatar: (gameId?: string) => Promise<string>
+  accuse: (suspectName: string, reason: string) => Promise<AccusationResponse>
   setHideBottomNav: (hide: boolean) => void
 }
 
@@ -87,14 +88,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         try {
           const { avatarUrl, hints, clearedItems, gameSolved } = await restoreHintsFromServer(gameId)
           if (cancelled) return
-          setState({
+          setState((s) => ({
+            ...s,
             gameId,
             avatarUrl,
             clearedItems,
             gameSolved,
             hints,
             isInitializing: false,
-          })
+          }))
           return
         } catch {
           // Game not found, will need new game via PreludePage
@@ -149,27 +151,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return {
         ...prev,
         clearedItems: turn.cleared_items,
-        gameSolved: turn.game_solved,
         hints,
       }
     })
   }, [])
 
+  const accuse = useCallback(async (suspectName: string, reason: string) => {
+    if (!state.gameId) throw new Error('Game not created yet')
+    const res = await api.accuseGameGameIdAccusePost(state.gameId, {
+      suspect_name: suspectName,
+      reason: reason,
+    })
+    if (res.data.correct) {
+      setState((s) => ({ ...s, gameSolved: true }))
+    }
+    return res.data
+  }, [state.gameId])
+
   const resetGame = useCallback(async () => {
     try { localStorage.removeItem(LS_GAME_ID) } catch { /* noop */ }
     try { sessionStorage.removeItem('prelude_seen_v1') } catch { /* noop */ }
-    setState({
+    setState((s) => ({
+      ...s,
       gameId: null,
       avatarUrl: null,
       clearedItems: [],
       gameSolved: false,
       hints: [],
       isInitializing: false,
-    })
+    }))
   }, [])
 
   return (
-    <GameContext.Provider value={{ ...state, updateFromTurn, resetGame, createGame, generateAvatar, setHideBottomNav }}>
+    <GameContext.Provider value={{ ...state, updateFromTurn, resetGame, createGame, generateAvatar, accuse, setHideBottomNav }}>
       {children}
     </GameContext.Provider>
   )
