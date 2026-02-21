@@ -78,7 +78,7 @@ async def generate_avatar(game_id: str):
     # 幽霊っぽくない普通の人物アバターとして生成するプロンプト
     avatar_prompt = f"""以下の外見の人物のポートレートイラストを描いてください。
 人物の外見: {ghost_description}
-スタイル: きれいなアニメ風イラスト、上半身のポートレート、シンプルな背景。
+スタイル: リアルな日本人で、上半身のポートレート、シンプルな背景。
 注意: 幽霊や怖い要素は一切入れないでください。普通の生きている人物として描いてください。"""
 
     response = await client.aio.models.generate_content(
