@@ -1,17 +1,37 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useCamera } from '../hooks/useCamera'
 import { useGameTurn } from '../hooks/useGameTurn'
 import { useGame } from '../contexts/GameContext'
 import { ProgressIndicator } from '../components/ProgressIndicator'
+import { PreludePage } from './PreludePage'
+
+const PRELUDE_SEEN_KEY = 'prelude_seen_v1'
 
 export function MainPage() {
+  const [showPrelude, setShowPrelude] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.sessionStorage.getItem(PRELUDE_SEEN_KEY) !== '1'
+  })
   const { videoRef, isActive, error: cameraError, start, capture } = useCamera()
   const { playTurn, isLoading, lastResult, error: turnError, dismissResult } = useGameTurn()
   const { clearedItems, gameSolved, isInitializing, resetGame } = useGame()
 
   useEffect(() => {
-    start()
-  }, [start])
+    if (!showPrelude) {
+      start()
+    }
+  }, [showPrelude, start])
+
+  if (showPrelude) {
+    return (
+      <PreludePage
+        onComplete={() => {
+          window.sessionStorage.setItem(PRELUDE_SEEN_KEY, '1')
+          setShowPrelude(false)
+        }}
+      />
+    )
+  }
 
   const handleShutter = () => {
     if (lastResult) {
