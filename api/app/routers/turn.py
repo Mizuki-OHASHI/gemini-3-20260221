@@ -19,7 +19,11 @@ ITEM_LABELS = {
     "cup": "コップ",
     "air_conditioner": "エアコン",
     "clock": "時計",
+    "earring": "隙間・角・家具の脇など小さなものが隠れていそうな場所",
 }
+
+# earring は phase1 アイテム完了後にのみ検出対象になる
+FINAL_ITEMS = {"earring"}
 
 
 def _build_vision_prompt(remaining_items: list[str]) -> str:
@@ -38,7 +42,9 @@ JSON形式で回答:
 def _build_ghost_prompt(
     hint_message: str, detected_item: str | None, has_avatar: bool
 ) -> str:
-    if detected_item:
+    if detected_item == "earring":
+        action = "幽霊は隙間（または角）を指さしている。その場所に小さなイアリング（ピアス）が落ちているのが見える。イアリングを画像の中に小さく自然に描いてください"
+    elif detected_item:
         action = f"幽霊は{ITEM_LABELS.get(detected_item, detected_item)}を指さしている"
     else:
         action = "幽霊はただ泣いている。悲しげに佇んでいる"
@@ -67,9 +73,16 @@ async def play_turn(game_id: str, file: UploadFile):
     avatar_url: str | None = game_data.get("avatar_url")
     cleared_items: list[str] = game_data.get("cleared_items", [])
 
-    # 2. 残りアイテム計算
+    # 2. 残りアイテム計算（earring は phase1 完了後にのみ出現）
     all_items = get_game_items()
-    remaining_items = sorted(all_items - set(cleared_items))
+    cleared = set(cleared_items)
+    phase1_items = all_items - FINAL_ITEMS
+
+    if phase1_items.issubset(cleared):
+        remaining_items = sorted(all_items - cleared)
+    else:
+        remaining_items = sorted(phase1_items - cleared)
+
     if not remaining_items:
         raise HTTPException(status_code=400, detail="All items already cleared")
 
@@ -128,9 +141,6 @@ async def play_turn(game_id: str, file: UploadFile):
     new_remaining = sorted(all_items - set(cleared_items))
     all_cleared = len(new_remaining) == 0
 
-    if all_cleared:
-        hint_message = hint_messages.get("final", hint_message)
-
     game_ref.update(update_data)
 
     # 7. 写真レコード保存
@@ -152,8 +162,11 @@ async def play_turn(game_id: str, file: UploadFile):
     if all_cleared:
         message = "すべての手がかりが揃いました。犯人を指名してください。"
     elif detected_item:
-        label = ITEM_LABELS.get(detected_item, detected_item)
-        message = f"{label}を発見しました！幽霊が何かを伝えています..."
+        if detected_item == "earring":
+            message = "何かを見つけたようです...隙間に何かが落ちています。"
+        else:
+            label = ITEM_LABELS.get(detected_item, detected_item)
+            message = f"{label}を発見しました！幽霊が何かを伝えています..."
     else:
         message = (
             f"手がかりが見つかりませんでした。ただ悲しそうに悲しそうに佇んでいます。"

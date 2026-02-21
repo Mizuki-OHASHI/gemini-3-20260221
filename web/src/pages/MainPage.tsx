@@ -7,7 +7,7 @@ import { AccusationOverlay } from "../components/AccusationOverlay";
 import { ProgressIndicator } from "../components/ProgressIndicator";
 import { PreludePage } from "./PreludePage";
 
-const ALL_ITEM_COUNT = 3;
+const ALL_ITEM_COUNT = 4;
 
 const PRELUDE_SEEN_KEY = "prelude_seen_v1";
 

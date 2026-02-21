@@ -4,7 +4,12 @@ const ITEMS = [
   { key: 'clock', label: '時計', icon: '🕰️' },
 ]
 
+const FINAL_ITEM = { key: 'earring', label: '証拠品', icon: '💍' }
+
 export function ProgressIndicator({ clearedItems }: { clearedItems: string[] }) {
+  const allPhase1Cleared = ITEMS.every((item) => clearedItems.includes(item.key))
+  const earringCleared = clearedItems.includes(FINAL_ITEM.key)
+
   return (
     <div className="flex justify-center gap-4 py-2">
       {ITEMS.map((item, index) => {
@@ -26,6 +31,23 @@ export function ProgressIndicator({ clearedItems }: { clearedItems: string[] }) 
           </div>
         )
       })}
+
+      {allPhase1Cleared && (
+        <div className="flex flex-col items-center gap-1 animate-spirit-reveal">
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-colors ${
+              earringCleared
+                ? 'bg-[var(--color-phantom)] text-[var(--color-frost)] shadow-[var(--glow-phantom)]'
+                : 'border-2 border-[var(--color-spirit)] text-[var(--color-spirit)] animate-ghost-pulse'
+            }`}
+          >
+            {earringCleared ? FINAL_ITEM.icon : '?'}
+          </div>
+          <span className={`text-xs ${earringCleared ? 'text-[var(--color-phantom)] font-semibold' : 'text-[var(--color-spirit)]'}`}>
+            {earringCleared ? FINAL_ITEM.label : '最後の手がかり'}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
